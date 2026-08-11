@@ -19,7 +19,6 @@ google-genai>=1.0.0
 openai
 streamlit-timeline
 Faker
-cv2
 
 # System & Utils
 psutil
