@@ -11,7 +11,7 @@ matplotlib
 seaborn
 scikit-learn
 scikit-image
-opencv-python
+opencv-python-headless
 statsmodels
 plotly
 altair
