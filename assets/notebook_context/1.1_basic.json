@@ -4,7 +4,7 @@
   "subsection": "1.1",
   "microskill": "1.1",
   "track": "basic",
-  "title": "What AI Is, and How an AI Project Works",
+  "title": "How Does an AI Model Work?",
   "audience": "Basic science researchers new to AI",
   "objectives": [
     "Place current AI capabilities in historical context using the interactive timeline.",
@@ -32,6 +32,7 @@
   "chatbot_guidance": [
     "This subsection publishes the Fact-or-Fiction verdict to the AI Guide as live state, so you can refer to the learner's most recent statement and verdict directly.",
     "The lifecycle critique appears only after the form is submitted. If a learner says nothing happened, check whether they pressed the button.",
-    "Descriptor or embedding calculation is the one Stage 2 step that is never optional -- raw SMILES strings are text and no model consumes them directly."
+    "Descriptor or embedding calculation is the one Stage 2 step that is never optional -- raw SMILES strings are text and no model consumes them directly.",
+    "Every chart on this page has a 'View chart data as text (accessible alternative)' expander beneath it, holding the same numbers as a table."
   ]
 }

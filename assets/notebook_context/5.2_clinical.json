@@ -8,7 +8,7 @@
   "audience": "Clinical researchers and clinician-scientists new to AI",
   "objectives": [
     "Apply normalization and augmentation, and say what a transform fabricates.",
-    "Match a denoising filter to the artefact it assumes.",
+    "Match a denoising filter to the artifact it assumes.",
     "Extract gradient, texture, and morphological features and choose between them.",
     "Judge whether an imaging pipeline is consistent enough to act on clinically."
   ],
@@ -19,28 +19,33 @@
       "how_to_use": "A selectbox for the bundled brightfield or fluorescence samples, or an upload."
     },
     {
-      "name": "Tab 1 - Normalization & Augmentation",
+      "name": "Activity selector",
+      "purpose": "Four activities behind one segmented control.",
+      "how_to_use": "Click a chip to switch activity. All four share the working-image selectbox above them."
+    },
+    {
+      "name": "Activity 1 - Normalization & Augmentation",
       "purpose": "Teach a model the shape of a structure, not its position.",
       "how_to_use": "Set the normalization factor and rotation angle, and tick the horizontal/vertical flip checkboxes. Note that rotation uses mode='wrap', so it fabricates the corners."
     },
     {
-      "name": "Tab 2 - Artefacts & Denoising",
+      "name": "Activity 2 - Artifacts & Denoising",
       "purpose": "Match the fix to the fault.",
       "how_to_use": "Motion blur first (length and angle) -- irreversible, so the right response is to re-acquire. Then salt-and-pepper noise: set the amount, choose Median or Gaussian, and compare the mean-absolute-error metric. Median wins because an outlier is never the median."
     },
     {
-      "name": "Tab 3 - Feature Extraction",
+      "name": "Activity 3 - Feature Extraction",
       "purpose": "Turn pixels into gradient, texture, and morphological features.",
       "how_to_use": "Three parts: 3.1 directional and Sobel gradients across five panels; 3.2 GLCM contrast and correlation on malignant vs. benign pathology slides, with a pixel-distance slider and an intensity-standardization toggle; 3.3 morphological closing on an ultrasound with a disk-radius slider, an action map, and a metric for the share of pixels the operation altered."
     },
     {
-      "name": "Tab 4 - Is the Pipeline Trustworthy?",
+      "name": "Activity 4 - Is the Pipeline Trustworthy?",
       "purpose": "Decide whether the pipeline is consistent enough to act on.",
       "how_to_use": "Choose the application, then work the six-gate consistency checklist. The score and verdict update as boxes are ticked; it opens at 0/6 by design. Three reflection prompts follow."
     }
   ],
   "chatbot_guidance": [
-    "The right filter is the one whose assumption matches the artefact: median for outliers, Gaussian for smooth additive noise, and nothing at all for motion blur -- reject and re-acquire.",
+    "The right filter is the one whose assumption matches the artifact: median for outliers, Gaussian for smooth additive noise, and nothing at all for motion blur -- reject and re-acquire.",
     "The mean-absolute-error metric in tab 2 lets the learner measure the median-vs-Gaussian claim instead of taking it on faith.",
     "The morphology action map shows what the operation invented. At a small radius that is gap-filling; at a large one the learner is drawing a lesion boundary rather than cleaning one.",
     "GLCM values move with the pixel-distance parameter, so texture features are only comparable across images when acquisition and parameters are identical.",

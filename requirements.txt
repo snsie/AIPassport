@@ -1,10 +1,12 @@
 # Core Libraries
-# NOTE: the >=1.31.0 floor below is understated and predates this file's history.
-# The entrypoint's st.navigation() needs >=1.36, and the notebooks use newer APIs
-# still (st.segmented_control, bordered columns, st.spinner(show_time=...)).
-# Verified end to end against streamlit 1.61.1 via scripts/verify_notebooks.py.
-# Raising the floor is a deployment decision, so it is left as-is rather than guessed.
-streamlit>=1.31.0
+# The floor is real, not nominal: st.navigation() needs >=1.36, the activity pickers
+# need st.segmented_control, and every chart and table now sizes with width="stretch"
+# rather than the use_container_width= argument Streamlit deprecated with a removal
+# date of 2025-12-31. That argument is gone or going; width= is what replaced it, and
+# it does not exist on older releases. Verified end to end against 1.61.1 via
+# scripts/verify_notebooks.py, so that is the floor rather than a guess at the exact
+# release where width= landed.
+streamlit>=1.61.0
 pandas
 numpy
 matplotlib

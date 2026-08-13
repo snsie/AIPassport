@@ -14,22 +14,27 @@
   ],
   "sections": [
     {
-      "name": "Tab 1 - Drift (Covariate Shift)",
+      "name": "Activity selector",
+      "purpose": "Four activities behind one segmented control at the top of the page.",
+      "how_to_use": "Click a chip to switch activity. Only the selected activity renders, and the choice is held in session state, so typing in the Model Card Builder and pressing Enter no longer sends you back to Activity 1."
+    },
+    {
+      "name": "Activity 1 - Drift (Covariate Shift)",
       "purpose": "Watch a deployed sepsis model decay, and test whether retraining recovers it.",
       "how_to_use": "Move the months-since-deployment slider to increase drift, then switch the mitigation radio between 'Do nothing' and 'Retrain'. Watch the false positive rate metric and the overlaid lactate histogram."
     },
     {
-      "name": "Tab 2 - Calibration vs. Discrimination",
+      "name": "Activity 2 - Calibration vs. Discrimination",
       "purpose": "Separate ranking ability from probability reliability.",
       "how_to_use": "Raise the population-mismatch slider and compare the AUC metric (barely moves) against the calibration curve (departs from the diagonal). Below the diagonal means the model overestimates risk."
     },
     {
-      "name": "Tab 3 - Subgroup Performance",
+      "name": "Activity 3 - Subgroup Performance",
       "purpose": "Measure on a real cohort whether one model serves both sexes.",
       "how_to_use": "Uses the bundled eicu_demo.csv. Pick variables to compare sex-split means, answer MCQ Question 1, then choose predictors and press 'Train and evaluate by sex' to fit three logistic regressions (female, male, whole cohort) and see the AUROC gap. Then MCQ Question 2."
     },
     {
-      "name": "Tab 4 - Model Card Builder",
+      "name": "Activity 4 - Model Card Builder",
       "purpose": "Document intended use and limits so findings are inherited, not rediscovered.",
       "how_to_use": "Fill the six fields (name, developer, intended users, caveats, ethical considerations, monitoring plan) and the card preview updates live. Forward-links to Module 7's datasheet generator."
     }
@@ -38,6 +43,7 @@
     "This page is identical on both tracks; the eICU cohort is real, bundled data.",
     "Tab 2's lesson lives in the contrast: as the mismatch slider rises the AUC barely moves while the calibration curve departs from the diagonal. Care pathways act on the probability, so calibration is what decides who gets treated.",
     "The AUROC gap between sexes in Tab 3 is the measurable form of the fairness concern argued in 2.1, and it is the number that belongs in the model card's limitations.",
-    "Fitting three models in Tab 3 takes a few seconds; the learner must press the button."
+    "Fitting three models in Tab 3 takes a few seconds; the learner must press the button.",
+    "Every chart on this page has a 'View chart data as text (accessible alternative)' expander beneath it, holding the same numbers as a table."
   ]
 }

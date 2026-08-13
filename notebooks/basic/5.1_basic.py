@@ -1,20 +1,24 @@
 import streamlit as st
 import numpy as np
+import pandas as pd
 import cv2
 import matplotlib.pyplot as plt
 import skimage.io as io
 from skimage import exposure, img_as_float
+import aipassport_config as cfg
 
 st.markdown(
     """
-An image is not a picture to a model — it is a matrix of numbers. This subsection establishes where those
+An image is a matrix of numbers, not a picture, to a model. This subsection establishes where those
 numbers come from and what happens when you change them.
 
-1. **Formation.** Build a synthetic X-ray from tissue densities and watch its histogram track your sliders.
-2. **Intensity operations.** Gamma, contrast rescaling, histogram equalization, and CLAHE — four ways to
-   change what is *visible* without changing what was *measured*.
+1. **Where the numbers come from.** Build a synthetic X-ray by setting tissue densities yourself, and
+   watch the histogram of pixel values move as you do.
+2. **Changing what you can see.** Four common adjustments — gamma, contrast rescaling, histogram
+   equalization, and CLAHE — each make features easier to spot by moving the pixel values around.
+   None of them add information that was not measured.
 
-That distinction is the whole point of this subsection. Subsection 5.2 then handles real artefacts.
+That distinction is the whole point of this subsection. Subsection 5.2 then handles real artifacts.
 """
 )
 
@@ -69,7 +73,7 @@ cv2.rectangle(xray, (140, 20), (160, 80), bone_intensity, -1)  # central bone
 
 form_cols = st.columns([1, 1])
 with form_cols[0]:
-    st.image(xray, caption="Simulated X-ray attenuation", use_container_width=True, clamp=True)
+    st.image(xray, caption="Simulated X-ray attenuation", width="stretch", clamp=True)
     with st.expander("Reveal: the physical interpretation"):
         st.markdown(
             """
@@ -77,20 +81,20 @@ with form_cols[0]:
         * **Low attenuation (air in lungs):** most of the beam passes through → **darker**.
         * **Intermediate tissue (muscle, fat, organs):** moderate absorption → **shades of grey**.
 
-        The greyscale is not an aesthetic choice. It is a measurement of how much beam survived.
+        The greyscale is a measurement of how much beam survived.
         """
         )
 
 with form_cols[1]:
     hist = cv2.calcHist([xray], [0], None, [256], [0, 256])
     fig_hist, ax_hist = plt.subplots(figsize=(6, 3.2))
-    ax_hist.plot(hist, color="#1f77b4")
+    ax_hist.plot(hist, color=cfg.CHART_PRIMARY)
     for value, label in (
         (air_intensity, "air"),
         (tissue_intensity, "tissue"),
         (bone_intensity, "bone"),
     ):
-        ax_hist.axvline(value, color="#ff7f0e", linestyle="--", linewidth=1)
+        ax_hist.axvline(value, color=cfg.CHART_SECONDARY, linestyle="--", linewidth=1)
         ax_hist.annotate(label, (value, ax_hist.get_ylim()[1] * 0.9), fontsize=8, rotation=90)
     ax_hist.set_title("Pixel intensity histogram")
     ax_hist.set_xlabel("Pixel intensity (0–255)")
@@ -99,6 +103,23 @@ with form_cols[1]:
     ax_hist.grid(True, alpha=0.3)
     st.pyplot(fig_hist)
     plt.close(fig_hist)
+
+    with st.expander("View chart data as text (accessible alternative)"):
+        st.markdown(
+            "Pixel counts grouped into sixteen intensity bands, darkest first. The three tallest bands "
+            "are the three materials; the sliders move which band each one lands in."
+        )
+        bands = np.arange(0, 256, 16)
+        st.dataframe(
+            pd.DataFrame(
+                {
+                    "Intensity band": [f"{b}–{b + 15}" for b in bands],
+                    "Pixel count": np.histogram(xray, bins=np.append(bands, 256))[0],
+                }
+            ),
+            width="stretch",
+            hide_index=True,
+        )
 
     st.markdown(
         f"""
@@ -172,11 +193,23 @@ def to_gray(image):
     return cv2.cvtColor(image, cv2.COLOR_RGB2GRAY) if image.ndim == 3 else image
 
 
-op_tab1, op_tab2, op_tab3, op_tab4 = st.tabs(
-    ["Gamma", "Contrast rescaling", "Histogram equalization", "CLAHE"]
+OPERATIONS = [
+    "Gamma",
+    "Contrast rescaling",
+    "Histogram equalization",
+    "CLAHE",
+]
+# A keyed segmented_control rather than st.tabs: tab selection lives in the browser and is
+# lost whenever a widget inside a tab triggers a rerun, which is what sent learners back to
+# the first activity mid-edit. This selection is in session_state, so it survives.
+operation = st.segmented_control(
+    "Intensity operation",
+    OPERATIONS,
+    default=OPERATIONS[0],
+    key="m5_intensity_op",
+    required=True,
 )
-
-with op_tab1:
+if operation == OPERATIONS[0]:
     st.subheader("Gamma correction")
     st.markdown(
         "A power-law curve applied to every pixel. Values **below 1** brighten the image by expanding the "
@@ -195,8 +228,8 @@ with op_tab1:
     corrected = exposure.adjust_gamma(img, gamma=gamma, gain=1)
 
     g_cols = st.columns(2)
-    g_cols[0].image(img, caption="Original", use_container_width=True)
-    g_cols[1].image(corrected, caption=f"Gamma = {gamma}", use_container_width=True)
+    g_cols[0].image(img, caption="Original", width="stretch")
+    g_cols[1].image(corrected, caption=f"Gamma = {gamma}", width="stretch")
 
     with st.expander("Reveal expected outcome"):
         st.write(
@@ -205,7 +238,7 @@ with op_tab1:
             "move — gamma redistributes the middle, it does not extend the range."
         )
 
-with op_tab2:
+if operation == OPERATIONS[1]:
     st.subheader("Contrast rescaling")
     st.markdown(
         "Pick a narrow intensity window and stretch it across the full range. Everything below the minimum "
@@ -223,8 +256,8 @@ with op_tab2:
             img_as_float(img), in_range=(in_min, in_max), out_range=(0, 1)
         )
         a_cols = st.columns(2)
-        a_cols[0].image(img, caption="Original", use_container_width=True)
-        a_cols[1].image(adjusted, caption=f"Rescaled from [{in_min}, {in_max}]", use_container_width=True)
+        a_cols[0].image(img, caption="Original", width="stretch")
+        a_cols[1].image(adjusted, caption=f"Rescaled from [{in_min}, {in_max}]", width="stretch")
 
     with st.expander("Reveal expected outcome"):
         st.write(
@@ -233,7 +266,7 @@ with op_tab2:
             "irrecoverably flat. You chose what to see, and therefore also what to discard."
         )
 
-with op_tab3:
+if operation == OPERATIONS[2]:
     st.subheader("Histogram equalization")
     st.markdown(
         "Rather than you choosing a window, equalization spreads the *most frequent* intensities out "
@@ -251,16 +284,34 @@ with op_tab3:
     ax_eq[0, 0].imshow(img_gray, cmap="gray")
     ax_eq[0, 0].axis("off")
     ax_eq[0, 0].set_title("Original")
-    ax_eq[0, 1].hist(img_gray.ravel(), bins=num_bins, color="#1f77b4")
+    ax_eq[0, 1].hist(img_gray.ravel(), bins=num_bins, color=cfg.CHART_PRIMARY)
     ax_eq[0, 1].set_title("Original histogram")
     ax_eq[1, 0].imshow(img_eq, cmap="gray")
     ax_eq[1, 0].axis("off")
     ax_eq[1, 0].set_title("Equalized")
-    ax_eq[1, 1].hist(img_eq.ravel(), bins=num_bins, color="#ff7f0e")
+    ax_eq[1, 1].hist(img_eq.ravel(), bins=num_bins, color=cfg.CHART_SECONDARY)
     ax_eq[1, 1].set_title("Equalized histogram")
     fig_eq.tight_layout()
     st.pyplot(fig_eq)
     plt.close(fig_eq)
+
+    with st.expander("View chart data as text (accessible alternative)"):
+        st.markdown(
+            "Equalization spreads the intensities out. Compare the two columns: the original clusters "
+            "into a few bands, the equalized version is closer to an even count in every band."
+        )
+        bands = np.arange(0, 256, 16)
+        st.dataframe(
+            pd.DataFrame(
+                {
+                    "Intensity band": [f"{b}–{b + 15}" for b in bands],
+                    "Original pixel count": np.histogram(img_gray, bins=np.append(bands, 256))[0],
+                    "Equalized pixel count": np.histogram(img_eq, bins=np.append(bands, 256))[0],
+                }
+            ),
+            width="stretch",
+            hide_index=True,
+        )
 
     with st.expander("Reveal expected outcome"):
         st.write(
@@ -269,7 +320,7 @@ with op_tab3:
             "were uniform for a good reason. That is the problem CLAHE exists to solve."
         )
 
-with op_tab4:
+if operation == OPERATIONS[3]:
     st.subheader("CLAHE — contrast-limited adaptive histogram equalization")
     st.markdown(
         "Equalization applied tile by tile instead of to the whole image, with a ceiling on how much any one "
@@ -288,10 +339,10 @@ with op_tab4:
     clahe_img = clahe.apply(img_gray)
 
     cl_cols = st.columns(2)
-    cl_cols[0].image(img_gray, caption="Original (greyscale)", use_container_width=True)
+    cl_cols[0].image(img_gray, caption="Original (greyscale)", width="stretch")
     cl_cols[1].image(
         clahe_img, caption=f"CLAHE (clip {clip_limit}, {tile_grid_size}×{tile_grid_size} tiles)",
-        use_container_width=True,
+        width="stretch",
     )
 
     with st.expander("Reveal expected outcome"):

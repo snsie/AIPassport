@@ -15,22 +15,27 @@
   ],
   "sections": [
     {
-      "name": "Tab 1 - Data, Split, and Scaling",
-      "purpose": "Establish the one split every later tab uses.",
-      "how_to_use": "Preview rows with the slider, inspect .dtypes, plot a feature by outcome, set the test-set size (stratified split, random_state=42), and toggle StandardScaler on one row to see why scaling matters for gradient-based models and not for trees."
+      "name": "Activity selector",
+      "purpose": "Four activities behind one segmented control at the top of the page.",
+      "how_to_use": "Click a chip to switch activity, and work them in order. The test-set slider sits above the selector, not inside an activity, so the one stratified split it defines is shared by every model on the page."
     },
     {
-      "name": "Tab 2 - A Model You Can Read",
+      "name": "Activity 1 - Data, Split, and Scaling",
+      "purpose": "Establish the one split every later tab uses.",
+      "how_to_use": "Preview rows with the slider, inspect .dtypes, plot a feature by outcome, and read the train/test split set by the slider above the selector (stratified, random_state=42), and toggle StandardScaler on one row to see why scaling matters for gradient-based models and not for trees."
+    },
+    {
+      "name": "Activity 2 - A Model You Can Read",
       "purpose": "Train a decision tree and trace one prediction through it.",
       "how_to_use": "Set max depth and watch test vs. training accuracy separate. Read the plotted tree or its text export, then move the eight feature sliders to get a live class and probability."
     },
     {
-      "name": "Tab 3 - A Model With More Capacity",
+      "name": "Activity 3 - A Model With More Capacity",
       "purpose": "See what a dense network buys and what it costs.",
       "how_to_use": "Three mechanism visualisers: the dropout neuron grid, the Conv1D sliding kernel, and the Keras architecture blocks. Then set epochs and batch size, and move the classification threshold to trade sensitivity against specificity. These metrics come from the network's real 5-fold held-out probabilities, not a formula."
     },
     {
-      "name": "Tab 4 - Validating and Choosing",
+      "name": "Activity 4 - Validating and Choosing",
       "purpose": "Report a spread rather than one number, then decide what to ship.",
       "how_to_use": "Set the fold count for cross-validation and read the four averaged metrics plus the per-fold bar chart. Then use the priority select_slider (Interpretability / Balanced / Performance) for a recommendation."
     }
@@ -39,6 +44,7 @@
     "The dataset is the bundled Pima Indians Diabetes dataset (768 records, 8 numeric features, binary Outcome), framed here as a plain supervised classification problem that transfers to an assay readout or expression matrix.",
     "Tabs 2-4 all use the split made in tab 1. If a learner changes the test size, every later number changes with it.",
     "Conv1D is deliberately shown as the wrong tool for this dataset: these columns have no natural order. It is the right tool for a sequence or a trace.",
-    "The tree's feature ranking is a hypothesis about mechanism, not a finding -- it is something you would then go and test."
+    "The tree's feature ranking is a hypothesis about mechanism, not a finding -- it is something you would then go and test.",
+    "Every chart on this page has a 'View chart data as text (accessible alternative)' expander beneath it, holding the same numbers as a table."
   ]
 }

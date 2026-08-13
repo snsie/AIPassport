@@ -13,32 +13,51 @@ if os.path.isdir(_chatui_pkg):
 
 from aip_chat_simple import render_ai_guide
 
+import aipassport_config as cfg
+
 st.set_page_config(
     page_title="AI Passport Notebooks (Dev)",
     page_icon="📚",
     layout="wide",
 )
 
+# ── Brand custom properties ────────────────────────────────────
+# Every colour below comes from aipassport_config so the palette has one home.
+# This is the only f-string in the CSS that defines colours; everything further
+# down refers to the custom properties by name.
+# Colours only. Do NOT set font-family here: Streamlit's Material icons are a
+# ligature font on spans that carry st-emotion-cache-* classes, so any broad
+# font rule turns every icon into its literal name ("keyboard_arrow_down").
+# Typography belongs in .streamlit/config.toml, which targets the right nodes.
+st.markdown(f"""
+<style>
+/* AI Passport brand variables (Branding Document v1) */
+:root {{
+    --ap-oxford-blue: {cfg.OXFORD_BLUE};
+    --ap-aquamarine: {cfg.AQUAMARINE};
+    --ap-teal: {cfg.TEAL};
+    --ap-harvest-gold: {cfg.HARVEST_GOLD};
+    --ap-ink: {cfg.INK};
+    --ap-surface: {cfg.SURFACE};
+    --ap-surface-alt: {cfg.SURFACE_ALT};
+    --ap-border: {cfg.BORDER};
+}}
+</style>
+""", unsafe_allow_html=True)
+
 # ── CSS: right chat column is sticky and stays in view ─────────
 st.markdown("""
 <style>
-/* IC3 / UF Brand Variables */
-:root {
-    --gator-blue: #0021A5;
-    --uf-orange: #FA4616;
-    --dark-blue: #001A57;
-    --light-blue: #E8EEF7;
-}
-
-/* Base Primary Buttons - UF Orange */
+/* Base Primary Buttons - Oxford Blue (white text clears AA at 14.8:1) */
 button[kind="primary"] {
-    background-color: var(--uf-orange) !important;
+    background-color: var(--ap-oxford-blue) !important;
     color: white !important;
-    border-color: var(--uf-orange) !important;
+    border-color: var(--ap-oxford-blue) !important;
 }
 button[kind="primary"]:hover {
-    background-color: #D6390E !important;
-    border-color: #D6390E !important;
+    background-color: var(--ap-teal) !important;
+    border-color: var(--ap-teal) !important;
+    color: var(--ap-oxford-blue) !important;
 }
 
 /* Chat Input border styling */
@@ -46,7 +65,7 @@ button[kind="primary"]:hover {
     border-color: rgba(128,128,128,0.2) !important;
 }
 [data-testid="stChatInput"]:focus-within {
-    border-color: var(--uf-orange) !important;
+    border-color: var(--ap-teal) !important;
 }
 
 /* Toggle tab button */
@@ -57,7 +76,7 @@ button[kind="primary"]:hover {
     z-index: 999999;
     width: 32px;
     height: 64px;
-    background-color: var(--gator-blue, #0021A5);
+    background-color: var(--ap-oxford-blue);
     border: none;
     border-radius: 8px 0 0 8px;
     cursor: pointer;
@@ -71,11 +90,17 @@ button[kind="primary"]:hover {
     transition: right 0.3s ease, background-color 0.2s;
 }
 #aip-toggle-tab:hover {
-    background-color: var(--dark-blue, #001A57);
+    background-color: var(--ap-teal);
+    color: var(--ap-oxford-blue);
 }
 
-/* Hide the underlying Streamlit toggle button */
-#toggle-btn-container {
+/* Hide the underlying Streamlit toggle button.
+   Targets the st-key-* class that st.container(key=...) emits. The older
+   trick of wrapping the button in a raw <div id> from st.markdown does not
+   work: Streamlit renders each markdown call in its own container, so the
+   browser auto-closes the div and the button lands outside it — leaving a
+   real "Toggle Chat" button visible at the top of every page. */
+.st-key-aip_toggle_host {
     position: fixed;
     top: -9999px;
     left: -9999px;
@@ -103,7 +128,7 @@ MODULE_NAMES = [
 # shows on its button. Module 6 has no content, so it has no subsections.
 MODULE_SUBSECTIONS = {
     "Module 1 - Fundamentals": [
-        "What AI Is, and How an AI Project Works",
+        "How Does an AI Model Work?",
         "Designing a Study You Can Defend",
     ],
     "Module 2 - Alignment": [
@@ -194,7 +219,7 @@ def render_home_page():
             cols = st.columns(len(pages))
             for i, p in enumerate(pages):
                 with cols[i]:
-                    if st.button(f"{p.title}", key=f"btn_{p.url_path}", use_container_width=True):
+                    if st.button(f"{p.title}", key=f"btn_{p.url_path}", width="stretch"):
                         st.switch_page(p)
 
 def render_notebook_page():
@@ -281,9 +306,12 @@ def render_notebook_page():
             else:
                 st.error(f"Demo file not found at {demo_full_path}")
         else:
-            st.warning(f"Notebook not found!")
+            st.warning("Notebook not found!")
             st.info(f"Looking for: `{nb_path}`")
-            st.caption("Please ensure the module files follow the `{module}.{microskill}_{track}.py` pattern.")
+            st.caption(
+                "Please ensure the notebook files follow the "
+                "`notebooks/{track}/{module}.{subsection}_{track}.py` pattern."
+            )
     else:
         render_home_page()
 
@@ -342,9 +370,9 @@ st.markdown(f"""
     max-width: 450px !important;
     flex: none !important;
     height: 100vh !important;
-    background-color: #F8F9FA !important;
+    background-color: var(--ap-surface-alt) !important;
     padding: 1rem 1.25rem 0 1.25rem !important;
-    border-left: 3px solid #0021A5 !important;
+    border-left: 3px solid var(--ap-oxford-blue) !important;
     box-shadow: -6px 0 20px rgba(0,0,0,0.08) !important;
     z-index: 999990 !important;
     overflow-y: auto !important;
@@ -356,7 +384,7 @@ st.markdown(f"""
     position: sticky !important;
     bottom: 0 !important;
     z-index: 10 !important;
-    background-color: #F8F9FA !important;
+    background-color: var(--ap-surface-alt) !important;
     padding: 0.5rem 0 0.75rem 0 !important;
 }}
 
@@ -369,14 +397,19 @@ st.markdown(f"""
     justify-content: center;
     margin-bottom: 2rem;
     padding: 0.5rem;
-    background: #f0f2f6;
+    background: var(--ap-surface-alt);
     border-radius: 10px;
 }}
 </style>
 <div id="aip-toggle-tab" title="Toggle AI Guide">{arrow_char}</div>
 """, unsafe_allow_html=True)
 
-# JS for sidebar toggle - robust version with retry
+# JS for sidebar toggle - robust version with retry.
+# Streamlit deprecated components.v1.html (removal date 2026-06-01, already passed) and points at
+# st.iframe instead. Do NOT make that swap blindly: st.iframe takes a *src* URL, and serving this
+# script from a data: URI would put the iframe in an opaque origin, where window.parent.document is
+# blocked by the same-origin policy — which is the one thing this script needs. components.html still
+# ships and still works; if it is finally removed, the replacement has to preserve same-origin access.
 components.html(f"""
 <script>
 (function() {{
@@ -398,12 +431,9 @@ components.html(f"""
     }}
 
     function clickToggleBtn() {{
-        // Find by aria-label or by searching inside toggle-btn-container
-        var container = parentDoc.getElementById('toggle-btn-container');
-        if (container) {{
-            var btn = container.querySelector('button');
-            if (btn) {{ btn.click(); return; }}
-        }}
+        // The host is the st.container(key="aip_toggle_host") wrapper.
+        var btn = parentDoc.querySelector('.st-key-aip_toggle_host button');
+        if (btn) {{ btn.click(); return; }}
         // Fallback: find any button whose text includes 'Toggle'
         var allBtns = parentDoc.querySelectorAll('button');
         for (var i = 0; i < allBtns.length; i++) {{
@@ -420,13 +450,12 @@ components.html(f"""
 </script>
 """, height=0, width=0)
 
-# Hidden Streamlit toggle button
-with st.container():
-    st.markdown('<div id="toggle-btn-container">', unsafe_allow_html=True)
+# Hidden Streamlit toggle button. The container key is what the CSS above and
+# the JS below both hook onto; keep the three in sync if you rename it.
+with st.container(key="aip_toggle_host"):
     if st.button("Toggle Chat", key="__aip_toggle__"):
         st.session_state["_chat_open"] = not st.session_state["_chat_open"]
         st.rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
 
 # ── Layout: Main Content + Chat ──────────────────────────────────────────────
 if st.session_state["_chat_open"]:

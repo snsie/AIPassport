@@ -16,9 +16,13 @@ A design is only worth as much as the rigor behind it. This subsection moves in 
 3. **Commit to a validation strategy** — splitting, cross-validation, external validation, subgroup performance.
 4. **Carry the decision to your team** — one professional message that a busy senior colleague will actually read.
 
-**Resources:** [MIMIC-IV](https://physionet.org/content/mimiciv/2.2/) ·
-[eICU Collaborative Research Database](https://eicu-crd.mit.edu/) ·
-[Google Colab](https://colab.research.google.com/) · [scikit-learn](https://scikit-learn.org/stable/)
+**Resources.** The two databases below are the kind of data a study like this runs on, and the two tools
+are what you would build it with — worth opening once now so the data plan in Part 1 is concrete rather
+than hypothetical:
+[MIMIC-IV](https://physionet.org/content/mimiciv/) and
+[eICU](https://eicu-crd.mit.edu/) (de-identified ICU records, free with training and a data-use
+agreement) · [Google Colab](https://colab.research.google.com/) and
+[scikit-learn](https://scikit-learn.org/stable/) (where the analysis would actually run).
 """
 )
 
@@ -29,17 +33,11 @@ st.markdown("---")
 # ═══════════════════════════════════════════════════════════════════════════
 st.header("1. The Design Brief")
 
-st.markdown(
-    """
-Six inputs. Keep each one short and specific — a brief that says exactly what you will do is more
-defensible than one that lists everything you *could* do.
-"""
-)
-
 st.subheader("1.1 The gap and the question")
 st.text_area(
-    "**Gap.** Name one concrete limitation of current AI-based CHF readmission prediction "
-    "(e.g., a population it was never validated on, a data type it ignores, a horizon it cannot see).",
+    "**Gap.** What are some potential limitations of predictive models? Consider which limitations would "
+    "be most relevant as you design an AI study to predict readmission risk and support discharge "
+    "planning for congestive heart failure.",
     key="m1_design_gap",
 )
 st.text_area(
@@ -85,6 +83,29 @@ if data_elements:
             "de-identification review before the data leaves the EHR."
         )
 
+# There is no answer key for a design brief — a good gap and a good cohort depend on the study. What can
+# be checked is whether each answer does the job the brief needs it to do, so the self-check below is
+# written as criteria the learner applies to their own text rather than as a model answer to copy.
+with st.expander("Check your own answers against these criteria"):
+    st.markdown(
+        """
+    A design brief has no single correct answer, but a defensible one clears all six bars below. Reread
+    what you wrote and mark each one honestly.
+
+    | Input | Your answer clears the bar if… |
+    | --- | --- |
+    | **Gap** | It names a limitation you could show evidence for — a population the model was never validated on, a data type it ignores, a horizon it cannot see — not "more research is needed". |
+    | **Question** | A reader can tell what you will measure, in whom, and by when. If it has no measurable outcome, it is a topic, not a question. |
+    | **Elements** | Every element you ticked is plausibly recorded *before* discharge. Anything recorded after the decision point is leakage, not a feature. |
+    | **Cohort** | Someone else could apply your criteria to the same database and pull the same patients. |
+    | **Missingness and bias** | You named a handling rule *and* a named bias — and said which direction the bias would push the model, not just that it exists. |
+    | **Preprocessing** | Each transformation is one you could compute from the elements you selected above. |
+
+    The most common failure is a question the data plan cannot answer. If your question mentions
+    something your selected elements never record, one of the two has to change.
+    """
+    )
+
 st.markdown("---")
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -96,7 +117,7 @@ st.markdown(
     """
 Your brief promised to handle missing and extreme values. This is where you actually do it.
 
-Below is a **simulated CHF admission table** — 40 patients, deliberately small enough to inspect by eye:
+Below is a **simulated CHF admission table** of 40 patients:
 
 - `age` — age of patient (years)
 - `length_of_stay` — duration of hospitalization (days)
@@ -127,7 +148,7 @@ def load_chf_cohort():
 df = load_chf_cohort()
 VARIABLES = ["age", "length_of_stay", "bnp", "sodium"]
 
-st.dataframe(df, use_container_width=True)
+st.dataframe(df, width="stretch")
 
 
 def iqr_bounds(column):
@@ -138,7 +159,7 @@ def iqr_bounds(column):
 
 
 st.subheader("2.1 See them")
-st.markdown("A boxplot makes an extreme value obvious before any arithmetic does.")
+st.markdown("A boxplot makes an extreme value obvious.")
 
 sel_plot = st.selectbox("Variable for boxplot:", VARIABLES, key="m1_rigor_plot_var")
 fig = px.box(df, x=sel_plot, points="all", hover_data=["patient_id"])
@@ -148,7 +169,20 @@ fig.update_layout(
     yaxis_title="",
     margin=dict(l=40, r=20, t=25, b=35),
 )
-st.plotly_chart(fig, use_container_width=True)
+st.plotly_chart(fig, width="stretch")
+
+with st.expander("View chart data as text (accessible alternative)"):
+    st.markdown(f"**Five-number summary of `{sel_plot}`**")
+    st.dataframe(df[sel_plot].describe().to_frame().T, width="stretch")
+    st.markdown("**The five most extreme values, furthest from the median first**")
+    st.dataframe(
+        df.assign(distance_from_median=(df[sel_plot] - df[sel_plot].median()).abs())
+        .sort_values("distance_from_median", ascending=False)
+        .head(5)[["patient_id", sel_plot]],
+        width="stretch",
+        hide_index=True,
+    )
+
 st.text_area(
     "Which points look like outliers, and which patient IDs are they?", key="m1_rigor_visual_notes"
 )
@@ -169,7 +203,7 @@ bound_cols[2].metric("Upper bound", f"{upper:.1f}")
 
 outlier_mask = (df[sel_stat] < lower) | (df[sel_stat] > upper)
 st.markdown("**Rows flagged by the IQR rule:**")
-st.dataframe(df[outlier_mask][["patient_id", sel_stat]], use_container_width=True)
+st.dataframe(df[outlier_mask][["patient_id", sel_stat]], width="stretch")
 st.text_area(
     "Do the flagged values look like data-entry errors, or like real patients who are genuinely unusual? "
     "Your answer changes what you are allowed to do next.",
@@ -266,8 +300,6 @@ st.markdown(
 **The situation:** your institution has **10,000 CHF admissions from three hospitals over three years**,
 recorded on five different EHR configurations, in a diverse, mostly urban population. The model will later
 be tested at an outside health system.
-
-Four decisions. Each one is a claim you will have to defend.
 """
 )
 
@@ -377,9 +409,9 @@ st.header("4. Carrying the Decision to Your Team")
 
 st.markdown(
     """
-A design nobody understands does not get built. This study needs an emergency physician, a cardiologist,
-a data scientist, a nurse informaticist, and someone who can speak for patients — and they do not share a
-vocabulary.
+Your study needs an emergency physician, a cardiologist, a data scientist, a nurse informaticist, and
+someone who can speak for patients. The problem is they do not share a vocabulary and words have very
+different meanings. Look at a few examples below:
 """
 )
 
@@ -393,7 +425,7 @@ with st.expander("Terms this team will use differently without noticing", expand
     | *validation* | statistical out-of-sample testing vs. regulatory/clinical validation |
     | *sensitivity* | true-positive rate vs. "how twitchy the alert is" |
     | *significance* | p < 0.05 vs. "big enough to change what I do" |
-    | *model* | the fitted artefact vs. the whole deployed system |
+    | *model* | the fitted artifact vs. the whole deployed system |
     | *bias* | statistical estimation bias vs. social/structural inequity |
     | *label* | the recorded outcome vs. the clinical truth it stands in for |
     | *drift* | covariate shift vs. "the ward changed its protocol" |
@@ -409,7 +441,7 @@ st.text_area(
     key="m1_team_plan",
 )
 
-st.subheader("The communication artefact")
+st.subheader("The communication artifact")
 
 with st.expander("The situation (click to expand)", expanded=True):
     st.markdown(

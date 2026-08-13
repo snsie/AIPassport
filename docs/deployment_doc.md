@@ -62,7 +62,7 @@ one with a pre-selected track, use the following `<iframe>` format in the Canvas
 
 | Path | Subsection |
 | --- | --- |
-| `/1.1` | What AI Is, and How an AI Project Works |
+| `/1.1` | How Does an AI Model Work? |
 | `/1.2` | Designing a Study You Can Defend |
 | `/2.1` | Ethics, Bias, and Human Oversight |
 | `/2.2` | Measuring and Documenting Model Quality |
@@ -115,7 +115,7 @@ returns Streamlit's "page not found".
 | `/4.6` | `/4.2` | overfitting, tuning, validation strategies |
 | `/4.7` | `/4.2` | subgroup fairness, SHAP, LIME, what-if |
 | `/5.1` | `/5.1` | unchanged path |
-| `/5.2` | `/5.1` and `/5.2` | intensity half to 5.1, augmentation/artefact half to 5.2 |
+| `/5.2` | `/5.1` and `/5.2` | intensity half to 5.1, augmentation/artifact half to 5.2 |
 | `/5.3` | `/5.2` | edges/threshold (basic), texture/morphology (clinical) |
 | `/5.4` | `/5.2` | page removed; its application framing became 5.2's closing gate |
 | `/5.5` | — | page removed (a bare third-party iframe with no instruction) |

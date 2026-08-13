@@ -5,17 +5,15 @@ import matplotlib.pyplot as plt
 from PIL import Image
 from skimage import transform, img_as_ubyte
 from skimage.util import random_noise
-from skimage.morphology import closing, disk
-from skimage.feature import graycomatrix, graycoprops
 
 st.markdown(
     """
 Subsection 5.1 established that a pixel is a measurement and that intensity operations change what is
-visible, not what was captured. Now the work: real artefacts, real feature extraction, and the question that
+visible, not what was captured. Now the work: real artifacts, real feature extraction, and the question that
 matters more than any single filter — **is this pipeline consistent enough to trust?**
 
 1. **Augmentation** — teach a model the shape of a structure rather than its position on the slide.
-2. **Artefacts** — motion blur and sensor noise, and why the right denoiser depends on the artefact.
+2. **Artifacts** — motion blur and sensor noise, and why the right denoiser depends on the artifact.
 3. **Features** — directional and Sobel gradients, Canny edges, and Otsu's automatic threshold.
 4. **Trust** — the consistency gate every imaging pipeline has to pass before anyone acts on its output.
 """
@@ -60,19 +58,26 @@ img = load_working_image(image_source, uploaded_file)
 if img is None:
     st.info("Upload an image above to begin, or pick one of the bundled samples.")
 else:
-    tab1, tab2, tab3, tab4 = st.tabs(
-        [
-            "1. Normalization & Augmentation",
-            "2. Artefacts & Denoising",
-            "3. Feature Extraction",
-            "4. Is the Pipeline Trustworthy?",
-        ]
+    ACTIVITIES = [
+        "1. Normalization & Augmentation",
+        "2. Artifacts & Denoising",
+        "3. Feature Extraction",
+        "4. Is the Pipeline Trustworthy?",
+    ]
+    # A keyed segmented_control rather than st.tabs: tab selection lives in the browser and is
+    # lost whenever a widget inside a tab triggers a rerun, which is what sent learners back to
+    # the first activity mid-edit. This selection is in session_state, so it survives.
+    activity = st.segmented_control(
+        "Activity",
+        ACTIVITIES,
+        default=ACTIVITIES[0],
+        key="m5_prep_activity",
+        required=True,
     )
-
     # ═══════════════════════════════════════════════════════════════════════
     # 1 — Normalization and augmentation
     # ═══════════════════════════════════════════════════════════════════════
-    with tab1:
+    if activity == ACTIVITIES[0]:
         st.header("Activity 1: Normalization and Augmentation")
         st.markdown(
             "Normalization puts every image on the same numeric footing. Augmentation changes an image's "
@@ -102,10 +107,10 @@ else:
             processed = np.flipud(processed)
 
         cols = st.columns(2)
-        cols[0].image(img, channels="RGB", caption="Original", use_container_width=True)
+        cols[0].image(img, channels="RGB", caption="Original", width="stretch")
         cols[1].image(
             processed, channels="RGB", caption="Normalized + augmented",
-            use_container_width=True, clamp=True,
+            width="stretch", clamp=True,
         )
 
         with st.expander("What to expect"):
@@ -120,10 +125,10 @@ else:
             )
 
     # ═══════════════════════════════════════════════════════════════════════
-    # 2 — Artefacts and denoising
+    # 2 — Artifacts and denoising
     # ═══════════════════════════════════════════════════════════════════════
-    with tab2:
-        st.header("Activity 2: Artefacts, and Matching the Fix to the Fault")
+    if activity == ACTIVITIES[1]:
+        st.header("Activity 2: Artifacts, and Matching the Fix to the Fault")
 
         st.subheader("2.1 Motion blur")
         st.markdown(
@@ -147,8 +152,8 @@ else:
 
         img_motion = cv2.filter2D(img, -1, kernel)
         mb_cols = st.columns(2)
-        mb_cols[0].image(img, caption="Original", use_container_width=True)
-        mb_cols[1].image(img_motion, caption="With motion blur", use_container_width=True)
+        mb_cols[0].image(img, caption="Original", width="stretch")
+        mb_cols[1].image(img_motion, caption="With motion blur", width="stretch")
         st.caption(
             "Motion blur destroys high-frequency detail irreversibly. Unlike noise, there is no filter that "
             "cleanly undoes it — the correct response is to reject the acquisition and repeat it."
@@ -157,7 +162,7 @@ else:
         st.subheader("2.2 Salt-and-pepper noise, and two ways to remove it")
         st.markdown(
             "A faulty sensor produces isolated pure-black and pure-white pixels. Two denoisers are on offer, "
-            "and only one of them is right for this artefact."
+            "and only one of them is right for this artifact."
         )
         noise_cols = st.columns([1, 1])
         noise_amount = noise_cols[0].slider(
@@ -186,9 +191,9 @@ else:
             denoised = cv2.GaussianBlur(noisy_u8, (5, 5), filter_strength)
 
         dn_cols = st.columns(3)
-        dn_cols[0].image(img, caption="Original", use_container_width=True)
-        dn_cols[1].image(noisy, caption="With salt-and-pepper noise", use_container_width=True, clamp=True)
-        dn_cols[2].image(denoised, caption=f"Denoised ({filter_type})", use_container_width=True)
+        dn_cols[0].image(img, caption="Original", width="stretch")
+        dn_cols[1].image(noisy, caption="With salt-and-pepper noise", width="stretch", clamp=True)
+        dn_cols[2].image(denoised, caption=f"Denoised ({filter_type})", width="stretch")
 
         mae = float(np.mean(np.abs(denoised.astype(float) - img.astype(float))))
         st.metric(
@@ -205,14 +210,14 @@ else:
                 "contributes to that average, so the noise is spread into its neighbours rather than "
                 "removed — the image looks muddy and the noise is still in it.\n\n"
                 "Compare the error metric under each. This is the general principle: **the right filter is "
-                "the one whose assumption matches the artefact.** Median assumes outliers; Gaussian assumes "
+                "the one whose assumption matches the artifact.** Median assumes outliers; Gaussian assumes "
                 "smooth additive noise."
             )
 
     # ═══════════════════════════════════════════════════════════════════════
     # 3 — Feature extraction
     # ═══════════════════════════════════════════════════════════════════════
-    with tab3:
+    if activity == ACTIVITIES[2]:
         st.header("Activity 3: Turning Pixels Into Features")
         gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
 
@@ -243,11 +248,11 @@ else:
         sobel = cv2.convertScaleAbs(sobel * sobel_strength)
 
         grad_cols = st.columns(5)
-        grad_cols[0].image(gray, caption="Greyscale", use_container_width=True)
-        grad_cols[1].image(cv2.convertScaleAbs(img_horiz), caption="Horizontal", use_container_width=True)
-        grad_cols[2].image(cv2.convertScaleAbs(img_vert), caption="Vertical", use_container_width=True)
-        grad_cols[3].image(magnitude, caption="Magnitude", use_container_width=True)
-        grad_cols[4].image(sobel, caption="Sobel", use_container_width=True)
+        grad_cols[0].image(gray, caption="Greyscale", width="stretch")
+        grad_cols[1].image(cv2.convertScaleAbs(img_horiz), caption="Horizontal", width="stretch")
+        grad_cols[2].image(cv2.convertScaleAbs(img_vert), caption="Vertical", width="stretch")
+        grad_cols[3].image(magnitude, caption="Magnitude", width="stretch")
+        grad_cols[4].image(sobel, caption="Sobel", width="stretch")
         st.caption(
             "The horizontal filter finds top and bottom boundaries; the vertical filter finds left and right. "
             "Neither alone is a complete outline — which is why magnitude, not either component, is the "
@@ -342,7 +347,7 @@ else:
     # ═══════════════════════════════════════════════════════════════════════
     # 4 — Trust
     # ═══════════════════════════════════════════════════════════════════════
-    with tab4:
+    if activity == ACTIVITIES[3]:
         st.header("Activity 4: Is This Pipeline Consistent Enough to Trust?")
 
         st.markdown(
@@ -352,7 +357,7 @@ else:
 
         Consider the application you would actually build: **microscopy cell analysis**, **tissue slide
         quality control**, or **image-based phenotype screening**. Each one inherits every choice you made in
-        tabs 1–3: the normalization, the denoiser, the kernel size, the threshold. A pipeline that is not
+        activities 1–3: the normalization, the denoiser, the kernel size, the threshold. A pipeline that is not
         reproducible does not have a performance number — it has a coincidence.
         """
         )
@@ -409,7 +414,7 @@ else:
                 "open, a good result is indistinguishable from a lucky one."
             )
 
-        st.subheader("Reflection")
+        st.subheader("Consider this:")
         st.text_area(
             f"Which step in a {application.lower()} workflow is most likely to introduce inconsistency, "
             "and how would you detect it?",
@@ -439,7 +444,7 @@ st.markdown(
 **Key takeaways**
 
 - Augmentation teaches invariance; it also invents pixels at the edges. Know what your transform fabricates.
-- **The right filter is the one whose assumption matches the artefact.** Median for outliers, Gaussian for
+- **The right filter is the one whose assumption matches the artifact.** Median for outliers, Gaussian for
   smooth noise, and nothing at all for motion blur — reject and re-acquire.
 - Sobel differentiates and so amplifies noise; Canny blurs, thins, and links; Otsu ignores edges entirely and
   splits on intensity. They fail in different ways, which is why the synthetic target is worth the detour.

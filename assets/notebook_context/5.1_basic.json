@@ -14,19 +14,25 @@
   ],
   "sections": [
     {
+      "name": "Intensity operation selector",
+      "purpose": "Four intensity operations behind one segmented control.",
+      "how_to_use": "Click a chip to switch operation. All four share the image selectbox above them, so you can compare operations on the same input."
+    },
+    {
       "name": "1. Where Pixel Values Come From",
       "purpose": "Build an image from physical densities and read its histogram.",
       "how_to_use": "Three sliders set the density of lungs (air), soft tissue, and bone. The synthetic radiograph updates, and the histogram's three peaks are annotated and move with the sliders. Peaks bunched at one end mean an under- or over-exposed acquisition."
     },
     {
-      "name": "Intensity operation tabs",
+      "name": "Intensity operations",
       "purpose": "Change what is visible without changing what was measured.",
-      "how_to_use": "Four tabs sharing one image selectbox: Gamma (one slider; below 1 brightens, above 1 darkens), Contrast rescaling (window minimum and maximum; the minimum must stay below the maximum), Histogram equalization (bin count; shows before/after images and histograms), and CLAHE (clip limit and tile grid size). Each has a 'Reveal expected outcome' expander."
+      "how_to_use": "Four options sharing one image selectbox: Gamma (one slider; below 1 brightens, above 1 darkens), Contrast rescaling (window minimum and maximum; the minimum must stay below the maximum), Histogram equalization (bin count; shows before/after images and histograms), and CLAHE (clip limit and tile grid size). Each has a 'Reveal expected outcome' expander."
     }
   ],
   "chatbot_guidance": [
     "The X-ray is synthesised with cv2.circle and cv2.rectangle, so the histogram peaks sit exactly at the slider values. That exactness is the teaching device.",
     "None of the intensity operations adds information. If structure was not captured, no transform recovers it -- and one that appears to has invented it.",
-    "Whatever enhancement is applied here must be applied identically at training and inference. The enhancement pipeline is part of the model."
+    "Whatever enhancement is applied here must be applied identically at training and inference. The enhancement pipeline is part of the model.",
+    "Every chart on this page has a 'View chart data as text (accessible alternative)' expander beneath it, holding the same numbers as a table."
   ]
 }

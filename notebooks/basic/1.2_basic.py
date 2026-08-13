@@ -5,9 +5,9 @@ import plotly.express as px
 
 st.markdown(
     """
-You are a computational biologist in a lab studying how cells respond to drug compounds. Your images
-capture subtle phenotypic changes that traditional scoring misses, and you want to use AI to **classify
-those phenotypes and surface novel responses**.
+You are a computational biologist in a lab studying how cells respond to drug compounds. You measure
+**cell viability** — how many cells are still alive in a plate after treatment — and you want to use AI to
+**score viability from images** instead of counting by hand.
 
 A design is only worth as much as the rigor behind it. This subsection moves in four steps:
 
@@ -16,9 +16,13 @@ A design is only worth as much as the rigor behind it. This subsection moves in 
 3. **Commit to a validation strategy** — splitting, cross-validation, external validation, subgroup performance.
 4. **Carry the decision to your team** — one professional message that a busy senior colleague will actually read.
 
-**Resources:** [Cell Painting Dataset](https://broad.io/CellPainting) ·
-[Allen Brain Atlas](https://portal.brain-map.org/) ·
-[PyTorch](https://pytorch.org/) · [scikit-learn](https://scikit-learn.org/stable/)
+**Resources.** The two collections below are the kind of imaging data a study like this runs on, and the
+two tools are what you would build it with — worth opening once now so the data plan in Part 1 is concrete
+rather than hypothetical:
+[Cell Painting Gallery](https://broadinstitute.github.io/cellpainting-gallery/) and
+[Allen Brain Atlas](https://portal.brain-map.org/) (public, openly downloadable image sets) ·
+[PyTorch](https://pytorch.org/) and [scikit-learn](https://scikit-learn.org/stable/) (where the analysis
+would actually run).
 """
 )
 
@@ -29,18 +33,10 @@ st.markdown("---")
 # ═══════════════════════════════════════════════════════════════════════════
 st.header("1. The Design Brief")
 
-st.markdown(
-    """
-Six inputs. Keep each one short and specific — a brief that says exactly what you will do is more
-defensible than one that lists everything you *could* do.
-"""
-)
-
 st.subheader("1.1 The gap and the question")
 st.text_area(
-    "**Gap.** Name one concrete limitation of current AI phenotype classification "
-    "(e.g., small labelled sets, batch effects, no interpretable link to a pathway, failure to transfer "
-    "across cell lines).",
+    "**Gap.** What are some potential limitations of predictive models? Consider which limitations would "
+    "be most relevant as you design an AI study to score cell viability from images after drug treatment.",
     key="m1_design_gap",
 )
 st.text_area(
@@ -51,20 +47,20 @@ st.text_area(
 
 st.subheader("1.2 The data plan")
 channels = st.multiselect(
-    "**Elements.** Which staining channels or compartments will your model see?",
+    "**Elements.** Which staining channels will your model see?",
     [
-        "DNA",
-        "Mitochondria",
-        "Endoplasmic reticulum",
-        "Golgi",
+        "Nuclear stain (total cell count)",
+        "Live-cell stain (e.g. calcein-AM)",
+        "Dead-cell stain (e.g. propidium iodide)",
+        "Mitochondrial membrane potential",
+        "Brightfield / phase contrast",
         "Cytoskeleton",
-        "RNA",
     ],
     key="m1_design_elements",
 )
 st.text_area(
     "**Cohort.** Give your inclusion and exclusion criteria for images in two or three lines "
-    "(cell type, focus quality, treatment, plate position).",
+    "(cell line, focus quality, treatment and dose, plate position).",
     key="m1_design_cohort",
 )
 st.text_area(
@@ -75,8 +71,8 @@ st.text_area(
 )
 st.text_area(
     "**Preprocessing.** Name the transformations you will apply — illumination correction, intensity "
-    "normalization, feature extraction, and at least one biologically meaningful derived feature "
-    "(e.g., nuclear-to-cytoplasmic ratio).",
+    "normalization, segmentation, and at least one biologically meaningful derived feature "
+    "(e.g., the live-to-total cell ratio).",
     key="m1_design_prepro",
 )
 
@@ -84,51 +80,81 @@ if channels:
     st.caption(f"Your model will see: {', '.join(channels)}.")
     if len(channels) == 1:
         st.caption(
-            "Note: a single channel makes interpretation easier but forecloses any phenotype defined by "
-            "the relationship *between* compartments."
+            "Note: a single channel makes interpretation easier, but viability is a *ratio* — without a "
+            "total-count channel to divide by, a drop in live cells and a drop in seeding look identical."
         )
+
+# There is no answer key for a design brief — a good gap and a good cohort depend on the study. What can
+# be checked is whether each answer does the job the brief needs it to do, so the self-check below is
+# written as criteria the learner applies to their own text rather than as a model answer to copy.
+with st.expander("Check your own answers against these criteria"):
+    st.markdown(
+        """
+    A design brief has no single correct answer, but a defensible one clears all six bars below. Reread
+    what you wrote and mark each one honestly.
+
+    | Input | Your answer clears the bar if… |
+    | --- | --- |
+    | **Gap** | It names a limitation you could show evidence for — a cell line the method was never tested on, a dose range it cannot resolve, a batch effect it ignores — not "more research is needed". |
+    | **Question** | A reader can tell what you will measure, in what system, and by when. If it has no measurable outcome, it is a topic, not a question. |
+    | **Elements** | The channels you ticked can actually produce a viability number. Live and dead counts without a total count give you a difference, not a fraction. |
+    | **Cohort** | Someone else could apply your criteria to the same plates and keep the same images. |
+    | **Missingness and bias** | You named a handling rule *and* a named bias — and said which direction the bias would push the model, not just that it exists. |
+    | **Preprocessing** | Each transformation is one you could compute from the channels you selected above. |
+
+    The most common failure is a question the data plan cannot answer. If your question mentions
+    something your selected channels never record, one of the two has to change.
+    """
+    )
 
 st.markdown("---")
 
 # ═══════════════════════════════════════════════════════════════════════════
 # Part 2 — The rigor lab (outliers)
 # ═══════════════════════════════════════════════════════════════════════════
-st.header("2. Rigor Lab: Outliers in a Measurement Table")
+st.header("2. Rigor Lab: Outliers in Your Replicate Counts")
 
 st.markdown(
     """
 Your brief promised to handle failed wells and extreme values. This is where you actually do it.
 
-The table below is a **simulated set of ICU vital signs** for 30 patients rather than a plate of images —
-deliberately, for two reasons: it is small enough to inspect by eye, and the outlier logic is identical
-whatever the measurement is. A saturated pixel intensity, a mis-segmented cell area, and a heart rate of 2
-are the same statistical problem and the same scientific decision.
+Below is a **simulated cell-viability table** of 30 wells. Each well was treated, then counted three
+times — once in each of three replicate experiments — so every row holds the same measurement made three
+independent ways:
 
-- `heart_rate` — beats per minute
-- `map` — mean arterial pressure (mmHg)
-- `temperature` — °C
+- `replicate_1` — live cells counted in the first replicate experiment
+- `replicate_2` — the same well, second replicate
+- `replicate_3` — the same well, third replicate
+
+Replicates are where counting errors show up. A well that reads 800, 780, and 41 was not killed by the
+drug in one experiment out of three — one replicate did not count correctly.
 """
 )
 
 
 @st.cache_data
-def load_vitals_sample():
+def load_viability_replicates():
     rng = np.random.default_rng(42)
     n = 30
+    # A well's true viability is shared across replicates; the per-replicate noise is counting noise.
+    true_count = rng.normal(760, 120, n)
     return pd.DataFrame(
         {
-            "patient_id": np.arange(1, n + 1),
-            "heart_rate": np.append(rng.normal(75, 10, n - 2), [150, 2]),  # two outliers
-            "map": np.append(rng.normal(85, 12, n - 1), [210]),            # one outlier
-            "temperature": np.append(rng.normal(37, 0.7, n - 1), [42]),    # one outlier
+            "well_id": [f"W{i:02d}" for i in range(1, n + 1)],
+            # replicate 2 saturated on one well; replicate 3 miscounted two wells (one empty, one doubled)
+            "replicate_1": np.round(true_count + rng.normal(0, 35, n)),
+            "replicate_2": np.round(np.append((true_count + rng.normal(0, 35, n))[:-1], [2400])),
+            "replicate_3": np.round(
+                np.append((true_count + rng.normal(0, 35, n))[:-2], [41, 1830])
+            ),
         }
     )
 
 
-df = load_vitals_sample()
-VARIABLES = ["heart_rate", "map", "temperature"]
+df = load_viability_replicates()
+VARIABLES = ["replicate_1", "replicate_2", "replicate_3"]
 
-st.dataframe(df, use_container_width=True)
+st.dataframe(df, width="stretch")
 
 
 def iqr_bounds(column):
@@ -139,19 +165,43 @@ def iqr_bounds(column):
 
 
 st.subheader("2.1 See them")
-st.markdown("A boxplot makes an extreme value obvious before any arithmetic does.")
+st.markdown(
+    "A boxplot makes an extreme value obvious. All three replicates are plotted on the same axis, so a "
+    "count that only one replicate produced has nothing to hide behind."
+)
 
-sel_plot = st.selectbox("Variable for boxplot:", VARIABLES, key="m1_rigor_plot_var")
-fig = px.box(df, x=sel_plot, points="all", hover_data=["patient_id"])
+long_counts = df.melt(
+    id_vars="well_id", value_vars=VARIABLES, var_name="Replicate", value_name="Live cell count"
+)
+fig = px.box(
+    long_counts, x="Replicate", y="Live cell count", points="all", hover_data=["well_id"]
+)
 fig.update_layout(
-    height=320,
-    xaxis_title=sel_plot,
-    yaxis_title="",
+    height=340,
+    xaxis_title="",
     margin=dict(l=40, r=20, t=25, b=35),
 )
-st.plotly_chart(fig, use_container_width=True)
+st.plotly_chart(fig, width="stretch")
+
+with st.expander("View chart data as text (accessible alternative)"):
+    st.markdown("**Five-number summary of each replicate**")
+    st.dataframe(df[VARIABLES].describe().T, width="stretch")
+    st.markdown("**The five counts furthest from their own replicate's median**")
+    st.dataframe(
+        long_counts.assign(
+            distance_from_median=lambda d: (
+                d["Live cell count"] - d.groupby("Replicate")["Live cell count"].transform("median")
+            ).abs()
+        )
+        .sort_values("distance_from_median", ascending=False)
+        .head(5)[["well_id", "Replicate", "Live cell count"]],
+        width="stretch",
+        hide_index=True,
+    )
+
 st.text_area(
-    "Which points look like outliers, and which record IDs are they?", key="m1_rigor_visual_notes"
+    "Which points look like outliers, which wells are they, and which replicate did each come from?",
+    key="m1_rigor_visual_notes",
 )
 
 st.subheader("2.2 Measure them")
@@ -160,7 +210,7 @@ st.markdown(
     "a law — but it is a convention you can write down in a methods section."
 )
 
-sel_stat = st.selectbox("Variable for threshold calculation:", VARIABLES, key="m1_rigor_calc_var")
+sel_stat = st.selectbox("Replicate for threshold calculation:", VARIABLES, key="m1_rigor_calc_var")
 lower, upper, q1, q3, iqr = iqr_bounds(sel_stat)
 
 bound_cols = st.columns(3)
@@ -170,15 +220,25 @@ bound_cols[2].metric("Upper bound", f"{upper:.2f}")
 
 outlier_mask = (df[sel_stat] < lower) | (df[sel_stat] > upper)
 st.markdown("**Rows flagged by the IQR rule:**")
-st.dataframe(df[outlier_mask], use_container_width=True)
+if outlier_mask.any():
+    st.dataframe(df[outlier_mask], width="stretch")
+else:
+    # replicate_1 is clean. An empty table with no caption reads as a broken page, so say plainly that
+    # a replicate with nothing to flag is a result rather than a missing one.
+    st.success(
+        f"Nothing flagged. Every count in **{sel_stat}** falls inside the bounds above — that replicate "
+        "counted cleanly. A replicate with no outliers is a finding, not a failed check. Switch to "
+        "another replicate to see what a failed count looks like."
+    )
 st.text_area(
-    "Do the flagged values look like instrument or entry errors, or like genuinely unusual samples? "
-    "Your answer changes what you are allowed to do next.",
+    "Do the flagged counts look like a replicate that failed to count, or like wells that genuinely "
+    "responded to the drug? Compare each flagged well against its other two replicates before you answer — "
+    "and note that your answer changes what you are allowed to do next.",
     key="m1_rigor_flagged_notes",
 )
 
 st.subheader("2.3 See what they cost you")
-sel_compare = st.selectbox("Variable for comparison:", VARIABLES, key="m1_rigor_compare_var")
+sel_compare = st.selectbox("Replicate for comparison:", VARIABLES, key="m1_rigor_compare_var")
 lwr2, upr2, *_ = iqr_bounds(sel_compare)
 with_out = df[sel_compare]
 wout_out = df[~((df[sel_compare] < lwr2) | (df[sel_compare] > upr2))][sel_compare]
@@ -206,13 +266,13 @@ st.markdown(
     """
 Three defensible strategies, each with a different cost:
 
-- **Remove** — honest about uncertainty, but throws away real samples and shrinks your dataset.
-- **Winsorize** — keeps every row, at the price of a value that was never measured.
-- **Impute with median** — keeps the row and the sample size, and erases the signal that made it unusual.
+- **Remove** — honest about uncertainty, but throws away real wells and shrinks your dataset.
+- **Winsorize** — keeps every well, at the price of a count that was never observed.
+- **Impute with median** — keeps the well and the sample size, and erases the signal that made it unusual.
 """
 )
 
-sel_handle = st.selectbox("Variable for handling strategies:", VARIABLES, key="m1_rigor_handle_var")
+sel_handle = st.selectbox("Replicate for handling strategies:", VARIABLES, key="m1_rigor_handle_var")
 approach = st.radio(
     "Strategy:",
     ["Remove (exclude outlier rows)", "Winsorize (cap at threshold)", "Impute with median"],
@@ -263,11 +323,9 @@ st.header("3. A Validation Strategy You Can Defend")
 
 st.markdown(
     """
-**The situation:** your dataset is **10,000 images acquired over three years**, across three plate batches,
-two microscopes, and four cell lines. The model will later be tested on images from a collaborating lab
-using a different imaging platform.
-
-Four decisions. Each one is a claim you will have to defend.
+**The situation:** your dataset is **10,000 cell counts acquired over the year**, across three plate
+batches, two microscopes, and four cell lines. The model will later be tested on images from a
+collaborating lab using a different imaging platform to measure cell viability.
 """
 )
 
@@ -378,9 +436,9 @@ st.header("4. Carrying the Decision to Your Team")
 
 st.markdown(
     """
-A design nobody understands does not get built. This study needs a cell biologist, a microscopist, a data
-scientist, a software engineer, and someone who knows the compound library — and they do not share a
-vocabulary.
+Your study needs a cell biologist, a microscopist, a data scientist, a software engineer, and someone who
+knows the compound library. The problem is they do not share a vocabulary and words have very different
+meanings. Look at a few examples below:
 """
 )
 
@@ -410,7 +468,7 @@ st.text_area(
     key="m1_team_plan",
 )
 
-st.subheader("The communication artefact")
+st.subheader("The communication artifact")
 
 with st.expander("The situation (click to expand)", expanded=True):
     st.markdown(

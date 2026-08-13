@@ -14,15 +14,15 @@ with header_cols[1]:
 
 st.markdown(
     """
-Artificial intelligence can seem mysterious, complex, or even magical — but at its core, AI is a tool
-built by humans to solve specific problems. This subsection demystifies it in two moves.
+Artificial intelligence (AI) can seem mysterious and complex, but at its core AI is a tool built by humans
+to solve specific problems. This subsection demystifies AI in two ways.
 
 First you will place today's capabilities in **historical context** with an interactive AI timeline, then
 test your own assumptions in **AI: Fact or Fiction?**, which gives you immediate, evidence-based feedback.
 
-Second, you will follow a **deployed clinical model through its lifecycle** — watching what happens to its
-accuracy when the patient population shifts underneath it, and practising the data validation that
-catches the problem before a prediction reaches a clinician.
+Second, you will follow a **deployed clinical model through its lifecycle**. Watch what happens to its
+accuracy when the patient population shifts, and practice data validation to solve the problem before an
+incorrect prediction reaches a clinician.
 """
 )
 
@@ -34,10 +34,10 @@ with st.container(border=True):
 
     st.markdown(
         """
-    **Artificial Intelligence (AI)** has evolved from a bold academic concept into a transformative
-    force reshaping science, medicine, industry, and everyday life. This interactive timeline
-    explores key milestones in the history of AI — from the theoretical groundwork laid by Alan Turing
-    in the 1950s, to the explosive rise of generative models and multimodal agents in the 2020s.
+    **Artificial Intelligence (AI)** has evolved from a bold concept to a transformative reality
+    reshaping science, medicine, industry, and everyday life. This interactive timeline explores key
+    milestones in the history of AI, from the theoretical groundwork laid by Alan Turing in the 1950s
+    to the explosive rise of generative models and multimodal agents in the 2020s.
 
     As you scroll through the timeline, consider how each breakthrough reflects the state of computing
     at the time, and how it contributes to a larger story of increasing intelligence, autonomy, and impact.
@@ -218,11 +218,15 @@ with st.container(border=True):
 
     st.markdown(
         """
+    You are a cardiologist at a hospital that deployed an AI model two years ago to flag patients at high
+    risk of a heart disease event during routine visits. The model performed well at launch. But patient
+    populations shift, and now one of your nurses mentions the model's risk flags feel "off".
+
     An AI project does not end when the model is trained. It is deployed, it is monitored, the patient
     population changes, and someone has to decide when to retrain. Below is a **simulated heart-disease
-    risk predictor** running on simulated EHR data: three model versions and three incoming data batches,
-    each of 100 patients with `age`, `systolic_bp`, `cholesterol`, `bmi`, `smoker`, and the observed
-    `outcome` (1 = heart disease event).
+    risk predictor** running on simulated EHR (electronic health record) data: three model versions and
+    three incoming data batches, each of 100 patients with `age`, `systolic_bp`, `cholesterol`, `bmi`,
+    `smoker`, and the observed `outcome` (1 = heart disease event).
 
     **Deployment v3 contains data drift** — the population is older, heavier, and more of them smoke, and
     the relationship between the risk factors and the outcome has changed.
@@ -297,7 +301,7 @@ with st.container(border=True):
         return 1 / (1 + np.exp(-xb))
 
     st.markdown("**Sample of the incoming data:**")
-    st.dataframe(batches[0].head(), use_container_width=True)
+    st.dataframe(batches[0].head(), width="stretch")
 
     st.markdown("#### Pick a model version and the batch to monitor it on")
 
@@ -357,7 +361,7 @@ with st.container(border=True):
             height=380,
             margin=dict(l=40, r=20, t=55, b=45),
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
     with chart_cols[1]:
         fig2 = px.histogram(
             pd.DataFrame({"Predicted heart disease probability": y_prob}),
@@ -372,13 +376,24 @@ with st.container(border=True):
             margin=dict(l=40, r=20, t=55, b=45),
             bargap=0.08,
         )
-        st.plotly_chart(fig2, use_container_width=True)
+        st.plotly_chart(fig2, width="stretch")
 
-    st.markdown(
-        """
-    **Try this:** run **Model v1** on each batch in turn. On which batch does its performance first drop
-    noticeably? Then run **Model v3** on Deployment v3 — does retraining recover what was lost?
-    """
+    with st.expander("View chart data as text (accessible alternative)"):
+        st.markdown("**Confusion matrix** — rows are the true label, columns the prediction.")
+        st.dataframe(
+            pd.DataFrame(cm, index=["True: no event", "True: event"], columns=["Predicted: no event", "Predicted: event"]),
+            width="stretch",
+        )
+        st.markdown("**Predicted probabilities** — how many patients fall in each 0.1-wide band.")
+        prob_bands = pd.cut(y_prob, bins=np.arange(0, 1.1, 0.1), include_lowest=True)
+        st.dataframe(
+            prob_bands.value_counts().sort_index().rename("Patient count").to_frame(),
+            width="stretch",
+        )
+
+    cfg.try_this(
+        "run **Model v1** on each batch in turn. On which batch does its performance first drop "
+        "noticeably? Then run **Model v3** on Deployment v3 — does retraining recover what was lost?"
     )
     st.text_area("Your notes on model drift and retraining:", key="m1_lc_drift_notes")
 
@@ -386,10 +401,12 @@ with st.container(border=True):
     st.markdown(
         """
     An AI system must check data integrity *before* it predicts or retrains. Below, ten random records
-    from the batch you selected are checked against acceptable ranges. Move the sliders to see how the
-    definition of "valid" changes what gets flagged — and remember that a record silently accepted here
+    from the batch you selected are checked against acceptable ranges. A record silently accepted here
     becomes a prediction a clinician may act on.
     """
+    )
+    cfg.try_this(
+        "move the sliders and watch how the definition of \"valid\" changes what gets flagged."
     )
 
     row_samp = batches[batch_ver].sample(10, random_state=111).copy()
@@ -408,14 +425,25 @@ with st.container(border=True):
         | ~row_samp["bmi"].between(bmi_min, bmi_max)
     )
     row_samp["Validation Flag"] = np.where(out_of_range, "🚨 Problem", "OK")
-    st.dataframe(row_samp, use_container_width=True)
+    st.dataframe(row_samp, width="stretch")
     st.caption(f"{int(out_of_range.sum())} of 10 sampled records would be held back for review.")
 
 st.markdown(
     """
 ---
+**Key takeaways**
+
+- AI is a tool built by people to solve a stated problem. Every capability in the timeline arrived
+  because someone framed a problem narrowly enough to make progress on it.
+- A confident claim about AI is not evidence. Check what the system can actually do before you repeat it.
+- **A model does not fail loudly.** Accuracy decays as the population drifts away from the training data,
+  while the model keeps returning a number with the same confidence it always had.
+- Retraining is a decision someone has to make, on evidence. Monitoring is what produces that evidence.
+- **Validate the data before the model sees it.** A record accepted without checks becomes a prediction a
+  clinician may act on.
+
 **Resources**
-- [eICU Collaborative Research Database](https://eicu-crd.mit.edu/) · [MIMIC-IV](https://physionet.org/content/mimiciv/2.2/)
+- [eICU Collaborative Research Database](https://eicu-crd.mit.edu/) · [MIMIC-IV](https://physionet.org/content/mimiciv/)
 - [MLflow](https://mlflow.org/) and [DVC](https://dvc.org/) for versioning models and data
 """
 )

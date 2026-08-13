@@ -30,7 +30,7 @@
       "how_to_use": "It fabricated conversation, mischaracterised interviewees, degraded on accents, and wrote PII into transcript metadata. There is no reveal here on purpose."
     },
     {
-      "name": "Reflection",
+      "name": "Consider this:",
       "purpose": "Bridge from reasoning to measurement.",
       "how_to_use": "Ask which of the three cases a metric could have caught and which needed a person to notice. Subsection 2.2 makes these measurable."
     }

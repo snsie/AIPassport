@@ -5,7 +5,7 @@ import aipassport_config as cfg
 
 st.markdown(
     """
-Subsection 7.1 produced a study design and a rigor artefact. A design nobody funds, nobody understands, and
+Subsection 7.1 produced a study design and a rigor artifact. A design nobody funds, nobody understands, and
 nobody has stress-tested is not yet research.
 
 Four activities, each aimed at a different audience — and the last one at the pressure that arrives when the
@@ -98,7 +98,7 @@ def run_llm_activity(
     if st.button(
         "✅ Submit",
         type="primary",
-        use_container_width=True,
+        width="stretch",
         key=f"m7_{slug}_submit",
         disabled=client is None,
     ):
@@ -266,8 +266,7 @@ st.markdown(
 **Key takeaways**
 
 - A proposal that promises more than the design delivers is a problem you created for your future self.
-- Compressing a finding for a lay audience forces you to decide what the finding is. Every dropped hedge is a
-  claim you have chosen to make.
+- Compressing a finding for a lay audience forces you to decide what the finding is.
 - An objection found in rehearsal is cheap. The same objection found in review is not.
 - Research integrity is rarely a choice between obvious right and obvious wrong. It is usually a choice made
   under pressure, by someone junior, with a deadline.

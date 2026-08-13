@@ -4,6 +4,7 @@ import pandas as pd
 import plotly.express as px
 from scipy.stats import zscore
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
+import aipassport_config as cfg
 
 # ── Track-specific framing (this file is the clinical track) ────────────────
 SCENARIO = "Harmonizing patient data from two hospitals to predict COVID-19 severity"
@@ -89,7 +90,7 @@ st.markdown(
 )
 
 with st.expander("View the raw dataset", expanded=True):
-    st.dataframe(df_raw.head(10), use_container_width=True)
+    st.dataframe(df_raw.head(10), width="stretch")
     miss = int(df_raw["Feature_Secondary"].isna().sum())
     inspect_cols = st.columns(3)
     inspect_cols[0].metric("Records", f"{len(df_raw):,}")
@@ -164,16 +165,26 @@ with col_viz:
         symbol="Status",
         title=f"Distribution of {TARGET_LABEL}",
         labels={"Feature_Target": TARGET_LABEL},
-        color_discrete_map={"Outlier": "#d62728", "Valid data": "#1f77b4"},
+        color_discrete_map={"Outlier": cfg.DANGER, "Valid data": cfg.CHART_PRIMARY},
     )
     fig.add_hline(
         y=df_processing["Feature_Target"].mean(),
         line_dash="dash",
-        line_color="blue",
+        line_color=cfg.CHART_TERTIARY,
         annotation_text="Mean",
     )
     fig.update_layout(height=430, margin=dict(l=40, r=20, t=55, b=45))
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
+
+    with st.expander("View chart data as text (accessible alternative)"):
+        st.markdown(f"**Summary of {TARGET_LABEL}, split by whether the row was flagged**")
+        st.dataframe(
+            plot_df.groupby("Status")["Feature_Target"].describe(), width="stretch"
+        )
+        st.markdown("**The flagged rows themselves**")
+        st.dataframe(
+            plot_df[plot_df["Status"] == "Outlier"], width="stretch", hide_index=True
+        )
 
 if not apply_filter:
     st.warning(
@@ -265,7 +276,7 @@ else:
         fig_before.update_layout(
             height=380, showlegend=False, margin=dict(l=40, r=20, t=55, b=45)
         )
-        st.plotly_chart(fig_before, use_container_width=True)
+        st.plotly_chart(fig_before, width="stretch")
     with box_cols[1]:
         fig_after = px.box(
             box_after, x="Feature", y="Value", color="Feature", title=f"Processed ({scaler_type})"
@@ -273,13 +284,21 @@ else:
         fig_after.update_layout(
             height=380, showlegend=False, margin=dict(l=40, r=20, t=55, b=45)
         )
-        st.plotly_chart(fig_after, use_container_width=True)
+        st.plotly_chart(fig_after, width="stretch")
+
+    with st.expander("View chart data as text (accessible alternative)"):
+        st.markdown("**Raw (unprocessed)** — five-number summary of each feature")
+        st.dataframe(
+            box_before.groupby("Feature")["Value"].describe(), width="stretch"
+        )
+        st.markdown(f"**Processed ({scaler_type})** — the same summary after scaling")
+        st.dataframe(box_after.groupby("Feature")["Value"].describe(), width="stretch")
 
     remaining = int((np.abs(df_final[cols_to_scale].apply(zscore)) > 3).sum().sum())
     st.metric("Values still beyond 3 SD", remaining, delta="clean" if remaining == 0 else "review")
 
     with st.expander("View the processed data, ready for training"):
-        st.dataframe(df_final.head(), use_container_width=True)
+        st.dataframe(df_final.head(), width="stretch")
 
     # ═══════════════════════════════════════════════════════════════════════
     # Step 4 — Federated round
@@ -326,9 +345,9 @@ else:
             value=0,
             help="Zero rows of raw data left either institution.",
         )
-        st.caption(
-            "Try changing the z-score threshold or the scaler and running again. The weights move — which "
-            "is exactly why both sites have to agree on the preprocessing before the first round, not after."
+        cfg.try_this(
+            "change the z-score threshold or the scaler and run again. The weights move — which is "
+            "exactly why both sites have to agree on the preprocessing before the first round, not after."
         )
 
 st.markdown(

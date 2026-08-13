@@ -17,12 +17,12 @@
     {
       "name": "1. The Design Brief",
       "purpose": "State the gap, the research question, and the data plan before any modelling.",
-      "how_to_use": "Six inputs: a gap, a SMART research question, a multiselect of data elements, cohort criteria, missingness and bias, and preprocessing. Keep each answer short and specific."
+      "how_to_use": "Six inputs: a gap framed as the limitations of predictive models, a SMART research question, a multiselect of staining channels, cohort criteria, missingness and bias, and preprocessing. There is no answer key; the 'Check your own answers against these criteria' expander below gives six criteria the learner applies to their own text. The most common failure it catches is a question the data plan cannot answer."
     },
     {
       "name": "2. Rigor Lab: Outliers",
-      "purpose": "Detect and handle outliers, and see what each choice costs.",
-      "how_to_use": "Five steps, each with its own variable selectbox: 2.1 boxplot, 2.2 the 1.5xIQR bounds plus a table of flagged rows, 2.3 mean/std/median with and without outliers, 2.4 a strategy radio (remove, winsorize, impute with median) whose metrics show the delta, and 2.5 a methods sentence to write."
+      "purpose": "Detect and handle counting errors across three replicate experiments, and see what each choice does to the numbers.",
+      "how_to_use": "The table is 30 wells counted three times, once per replicate experiment. 2.1 plots all three replicates on one boxplot, so a count only one replicate produced has nothing to hide behind; the rest of the steps use a replicate selectbox. 2.2 gives the 1.5xIQR bounds and a table of flagged rows, 2.3 compares mean/std/median with and without them, 2.4 applies remove, winsorize, or median imputation, and 2.5 asks for the methods sentence. Check a flagged well against its other two replicates before deciding whether it is a failed count or a real drug response."
     },
     {
       "name": "3. A Validation Strategy You Can Defend",
@@ -39,6 +39,7 @@
     "The scenario is AI phenotype classification on Cell Painting-style imaging; the rigor lab deliberately uses a small 30-row vitals table instead, because the outlier logic is identical and the table is small enough to inspect by eye.",
     "If a learner objects that the lab data is clinical, agree and explain why: a saturated pixel intensity, a mis-segmented cell area, and a heart rate of 2 are the same statistical problem.",
     "Push back gently on vague design-brief answers. Naming the mechanism of a bias beats naming the category.",
-    "The four validation tasks are four separate claims. A strong answer to one does not cover the others."
+    "The four validation tasks are four separate claims. A strong answer to one does not cover the others.",
+    "Every chart on this page has a 'View chart data as text (accessible alternative)' expander beneath it, holding the same numbers as a table."
   ]
 }

@@ -8,10 +8,11 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import roc_auc_score, confusion_matrix
 from sklearn.calibration import calibration_curve
+import aipassport_config as cfg
 
 st.markdown(
     """
-Subsection 2.1 reasoned about harm. This one **measures** it, then writes the measurement down.
+Subsection 2.1 reasoned about harm. This one **measures** it.
 
 * **Activity 1 — Drift.** Watch a sepsis model decay under covariate shift, and test whether retraining fixes it.
 * **Activity 2 — Calibration vs. discrimination.** Two different things a "good" model can be, and why AUC alone hides the gap.
@@ -113,17 +114,24 @@ def get_processed_data(df_raw):
 # Main interface
 # ═══════════════════════════════════════════════════════════════════════════
 
-tab1, tab2, tab3, tab4 = st.tabs(
-    [
-        "1. Drift (Covariate Shift)",
-        "2. Calibration vs. Discrimination",
-        "3. Subgroup Performance",
-        "4. Model Card Builder",
-    ]
+ACTIVITIES = [
+    "1. Drift (Covariate Shift)",
+    "2. Calibration vs. Discrimination",
+    "3. Subgroup Performance",
+    "4. Model Card Builder",
+]
+# A keyed segmented_control rather than st.tabs: tab selection lives in the browser and is
+# lost whenever a widget inside a tab triggers a rerun, which is what sent learners back to
+# the first activity mid-edit. This selection is in session_state, so it survives.
+activity = st.segmented_control(
+    "Activity",
+    ACTIVITIES,
+    default=ACTIVITIES[0],
+    key="m2_activity",
+    required=True,
 )
-
 # ── Activity 1: drift ──────────────────────────────────────────────────────
-with tab1:
+if activity == ACTIVITIES[0]:
     st.header("Activity 1: Recognizing Data Drift")
     st.markdown(
         "Simulate how model performance degrades over time under covariate shift, and test whether "
@@ -197,7 +205,13 @@ with tab1:
             title=f"Lactate distribution shift (month {months})",
         )
         fig.update_layout(height=420, margin=dict(l=40, r=20, t=55, b=45))
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
+
+        with st.expander("View chart data as text (accessible alternative)"):
+            st.markdown("**Lactate distribution in each dataset**")
+            st.dataframe(
+                dist_df.groupby("Dataset")["Lactate"].describe(), width="stretch"
+            )
 
         st.info(
             "This is **covariate shift**: the input distribution has moved while the model's learned "
@@ -205,7 +219,7 @@ with tab1:
         )
 
 # ── Activity 2: calibration vs discrimination ──────────────────────────────
-with tab2:
+if activity == ACTIVITIES[1]:
     st.header("Activity 2: Calibration vs. Discrimination")
     st.markdown(
         "A vendor sells you a readmission model with an excellent AUC. Analyze its performance on **your** "
@@ -250,7 +264,7 @@ with tab2:
                 x=[0, 1],
                 y=[0, 1],
                 mode="lines",
-                line=dict(color="gray", dash="dash"),
+                line=dict(color=cfg.MUTED, dash="dash"),
                 name="Perfectly calibrated",
             )
         )
@@ -259,7 +273,7 @@ with tab2:
                 x=prob_pred,
                 y=prob_true,
                 mode="lines+markers",
-                line=dict(color="purple"),
+                line=dict(color=cfg.CHART_PRIMARY),
                 name="Vendor model",
             )
         )
@@ -270,7 +284,20 @@ with tab2:
             height=430,
             margin=dict(l=40, r=20, t=55, b=45),
         )
-        st.plotly_chart(fig2, use_container_width=True)
+        st.plotly_chart(fig2, width="stretch")
+
+        with st.expander("View chart data as text (accessible alternative)"):
+            st.markdown(
+                "Each row is one bin of predictions. A perfectly calibrated model would have the two "
+                "columns equal on every row."
+            )
+            st.dataframe(
+                pd.DataFrame(
+                    {"Predicted probability": prob_pred, "Observed risk": prob_true}
+                ).round(3),
+                width="stretch",
+                hide_index=True,
+            )
 
         st.info(
             """
@@ -285,7 +312,7 @@ with tab2:
         )
 
 # ── Activity 3: subgroup performance ───────────────────────────────────────
-with tab3:
+if activity == ACTIVITIES[2]:
     st.header("Activity 3: Subgroup Performance")
     st.markdown(
         """
@@ -346,12 +373,12 @@ with tab3:
         fig3.update_layout(
             height=max(420, 90 * len(selected_variables)), margin=dict(l=40, r=20, t=55, b=45)
         )
-        st.plotly_chart(fig3, use_container_width=True)
+        st.plotly_chart(fig3, width="stretch")
 
-        with st.expander("View chart data as a table"):
+        with st.expander("View chart data as text (accessible alternative)"):
             st.dataframe(
                 means_df.pivot(index="Variable", columns="Group", values="Mean value"),
-                use_container_width=True,
+                width="stretch",
             )
     else:
         st.info("Select at least one variable to compare.")
@@ -445,7 +472,12 @@ with tab3:
                 fig4.update_layout(
                     height=430, showlegend=False, margin=dict(l=40, r=20, t=55, b=45)
                 )
-                st.plotly_chart(fig4, use_container_width=True)
+                st.plotly_chart(fig4, width="stretch")
+
+                with st.expander("View chart data as text (accessible alternative)"):
+                    st.dataframe(
+                        res_df.round(3), width="stretch", hide_index=True
+                    )
 
                 gap = abs(results["Female"] - results["Male"])
                 st.metric("AUROC gap between sexes", f"{gap:.3f}")
@@ -455,7 +487,7 @@ with tab3:
                 )
 
                 with st.expander("View results as a table"):
-                    st.dataframe(res_df, use_container_width=True)
+                    st.dataframe(res_df, width="stretch")
 
     st.divider()
     st.subheader("Question 2")
@@ -487,12 +519,12 @@ with tab3:
             st.error("Not quite — try again.")
 
 # ── Activity 4: model card ─────────────────────────────────────────────────
-with tab4:
+if activity == ACTIVITIES[3]:
     st.header("Activity 4: Model Card Builder")
     st.markdown(
         """
     Everything you measured in Activities 1–3 is worthless to the next person unless it is written down.
-    A **model card** is the artefact that carries intended use, performance, and limits forward — including
+    A **model card** is the artifact that carries intended use, performance, and limits forward — including
     the drift you found, the calibration gap, and the subgroup AUROC difference.
 
     You will build a fuller version of this document in Module 7.
@@ -529,7 +561,7 @@ with tab4:
         st.subheader("Preview")
         st.markdown(
             f"""
-        <div style="background-color:#f9f9f9; padding:20px; border-radius:10px; border:1px solid #ddd;">
+        <div style="background-color:{cfg.SURFACE_ALT}; padding:20px; border-radius:10px; border:1px solid {cfg.BORDER};">
             <h3>Model Card: {mc_name}</h3>
             <p><strong>Developer:</strong> {mc_dev}</p>
             <hr>
@@ -540,7 +572,7 @@ with tab4:
             <p><strong>Reliability:</strong> calibration slope and reliability diagram</p>
             <p><strong>Operating point:</strong> false positive rate at the deployed threshold</p>
             <h4>3. Caveats &amp; Limitations</h4>
-            <p style="color:#b3261e;">{mc_limits}</p>
+            <p style="color:{cfg.DANGER};">{mc_limits}</p>
             <h4>4. Ethical Considerations</h4>
             <p>{mc_ethics}</p>
             <h4>5. Monitoring</h4>

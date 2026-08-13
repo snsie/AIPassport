@@ -41,7 +41,7 @@
   "chatbot_guidance": [
     "Work the three activities in order; each takes the output of the previous one.",
     "These activities generate feedback, not verdicts. Encourage the learner to disagree with the output where they have domain knowledge it lacks.",
-    "The learner built a smaller model card in subsection 2.2. The point is the same: the artefact is what lets the next person inherit the caveats.",
+    "The learner built a smaller model card in subsection 2.2. The point is the same: the artifact is what lets the next person inherit the caveats.",
     "Responses persist on screen across reruns, so switching activities does not discard them."
   ]
 }

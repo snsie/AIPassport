@@ -312,8 +312,34 @@ def check_rendering(filters: list[str], interact: bool) -> None:
                    + len(at.slider) + len(at.button) + len(at.checkbox) + len(at.text_input))
         ok(f"{path}  ({widgets} widgets)")
 
+        check_activities(path, at)
+
         if interact:
             check_interactions(path)
+
+
+def check_activities(path: str, first_run) -> None:
+    """Render every option of an activity picker, not just the one it opens on.
+
+    Activities used to be st.tabs, and Streamlit executes every tab body on every
+    run -- so one render exercised all of them. They are st.segmented_control now
+    and only the selected branch runs, which would leave four fifths of these
+    notebooks untested if the harness stopped at the default option."""
+    if not first_run.segmented_control:
+        return
+
+    for picker in first_run.segmented_control:
+        options = list(picker.options)
+        for option in options[1:]:  # options[0] is what the plain render already covered
+            at = app_test()
+            at.session_state[picker.key] = option
+            at.run()
+            if errs := exceptions_of(at):
+                fail(f"{path}: activity {option!r}")
+                for message in errs:
+                    print(f"          {message}")
+            else:
+                print(f"        ok  activity {option!r}")
 
 
 def check_interactions(path: str) -> None:

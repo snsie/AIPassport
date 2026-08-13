@@ -26,8 +26,8 @@ Instead of a complex external backend, the AI Guide talks straight to the **UF N
 - **Every module presents exactly two subsections**, `{module}.1` and `{module}.2`, following an
   Understand → Apply arc. Both tracks exist for all twelve subsections. The pairing and the titles live in
   `MODULE_SUBSECTIONS` in `aipassport_notebooks.py`, which is what the registration loop walks — adding a
-  subsection requires an entry there as well as a notebook file. See `docs/consolidation-plan.md` for how the
-  curriculum was consolidated and `docs/deployment_doc.md` for the full path list.
+  subsection requires an entry there as well as a notebook file. See `docs/deployment_doc.md` for the
+  full path list.
 
 ### 5. Notebook Context (`assets/notebook_context/`)
 One JSON per notebook, named `{module}.{subsection}_{track}.json`. The AI Guide receives it verbatim, and
@@ -113,7 +113,18 @@ the verify script enforces this.
 ---
 
 ## 🎨 Branding
-The platform uses the **IC3 / University of Florida** color palette:
-- **Gator Blue**: `#0021A5` (Primary Navigation & Accents)
-- **UF Orange**: `#FA4616` (Buttons & Interactions)
-- **Background**: Modern, clean white with glassmorphic accents.
+The platform follows the **AI Passport Branding Document v1**. Every colour is defined once, in the brand
+palette block of `aipassport_config.py`; notebooks and components import it as `cfg` and reference the
+semantic roles (`cfg.CHART_PRIMARY`, `cfg.DANGER`, …) rather than hex literals.
+
+- **Oxford Blue** `#002657` — main colour, and the Streamlit `primaryColor`
+- **Aquamarine** `#70FCE0` — main accent (print/graphics); on the web its ADA-compliant substitute
+  **Teal** `#2CA6A4` is used instead
+- **Harvest Gold** `#F2A900` — the shared third colour on every module palette
+- `cfg.MODULE_ACCENTS` holds the per-module accent from the branding document (e.g. Module 2 burgundy,
+  Module 7 purple)
+- Type is **IBM Plex Sans**, the branding document's face for UF websites and Canvas, loaded by CSS in
+  the entrypoint
+
+`.streamlit/config.toml` duplicates four of these values because Streamlit's theme cannot read Python —
+change `aipassport_config.py` first, then mirror it there.

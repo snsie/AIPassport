@@ -10,15 +10,14 @@ with header_cols[1]:
 
 st.markdown(
     """
-Artificial intelligence can seem mysterious, complex, or even magical — but at its core, AI is a tool
-built by humans to solve specific problems. This subsection demystifies it in two moves.
+Artificial intelligence (AI) can seem mysterious and complex, but at its core AI is a tool built by humans
+to solve specific problems. This subsection demystifies AI in two ways.
 
 First you will place today's capabilities in **historical context** with an interactive AI timeline, then
 test your own assumptions in **AI: Fact or Fiction?**, which gives you immediate, evidence-based feedback.
 
-Second, you will walk a molecular classification project through **the full AI lifecycle** — making the
-four decisions every such project demands, and then reading a single consolidated critique of the plan
-you built.
+Second, you will walk a molecular classification project through **the full AI lifecycle**. You make the
+four decisions every such project demands, then read a single consolidated critique of the plan you built.
 """
 )
 
@@ -30,10 +29,10 @@ with st.container(border=True):
 
     st.markdown(
         """
-    **Artificial Intelligence (AI)** has evolved from a bold academic concept into a transformative
-    force reshaping science, medicine, industry, and everyday life. This interactive timeline
-    explores key milestones in the history of AI — from the theoretical groundwork laid by Alan Turing
-    in the 1950s, to the explosive rise of generative models and multimodal agents in the 2020s.
+    **Artificial Intelligence (AI)** has evolved from a bold concept to a transformative reality
+    reshaping science, medicine, industry, and everyday life. This interactive timeline explores key
+    milestones in the history of AI, from the theoretical groundwork laid by Alan Turing in the 1950s
+    to the explosive rise of generative models and multimodal agents in the 2020s.
 
     As you scroll through the timeline, consider how each breakthrough reflects the state of computing
     at the time, and how it contributes to a larger story of increasing intelligence, autonomy, and impact.
@@ -215,7 +214,7 @@ with st.container(border=True):
     st.markdown(
         """
     You are planning a **molecular classification project** — predicting whether compounds are active
-    against a protein target, using molecular fingerprints as features.
+    against a protein target.
 
     Every AI project makes the same four decisions, in the same order, and each one constrains the next.
     Make all four below, then submit to see how your plan holds up. *(No molecular data required — this is
@@ -395,6 +394,17 @@ with st.container(border=True):
 st.markdown(
     """
 ---
+**Key takeaways**
+
+- AI is a tool built by people to solve a stated problem. Every capability in the timeline arrived
+  because someone framed a problem narrowly enough to make progress on it.
+- A confident claim about AI is not evidence. Check what the system can actually do before you repeat it.
+- **Every AI project makes the same four decisions** — data, preprocessing, model, validation — and each
+  one constrains the next. Choosing a model before you know your data is choosing in the wrong order.
+- Where the data comes from sets the ceiling on what the finished model can claim.
+- **A validation strategy is the claim you are making.** With clustered data, a random split mostly
+  measures how well the model recognises what it has already seen.
+
 **Resources**
 - [ChEMBL](https://www.ebi.ac.uk/chembl/) · [PubChem](https://pubchem.ncbi.nlm.nih.gov/)
 - [RDKit](https://www.rdkit.org/) · [DeepChem](https://deepchem.io/) · [scikit-learn](https://scikit-learn.org/stable/)

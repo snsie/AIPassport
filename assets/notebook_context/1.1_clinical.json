@@ -4,7 +4,7 @@
   "subsection": "1.1",
   "microskill": "1.1",
   "track": "clinical",
-  "title": "What AI Is, and How an AI Project Works",
+  "title": "How Does an AI Model Work?",
   "audience": "Clinical researchers and clinician-scientists new to AI",
   "objectives": [
     "Place current AI capabilities in historical context using the interactive timeline.",
@@ -26,7 +26,7 @@
     },
     {
       "name": "The AI Lifecycle in Deployment",
-      "purpose": "See what happens to a deployed model when the population shifts.",
+      "purpose": "Follow a model the hospital deployed two years ago, whose risk flags a nurse now says feel off, and see what happened to it.",
       "how_to_use": "Pick a model version and an incoming data batch. Deployment v3 contains drift. Compare accuracy, ROC-AUC, the confusion matrix, and the predicted-probability histogram. Run Model v1 across all three batches to find where it first drops, then run Model v3 on batch 3 to see whether retraining recovers it."
     },
     {
@@ -38,6 +38,7 @@
   "chatbot_guidance": [
     "This subsection publishes the Fact-or-Fiction verdict to the AI Guide as live state, so you can refer to the learner's most recent statement and verdict directly.",
     "If the learner asks why accuracy dropped, steer them to the difference between the model version and the data batch rather than to the code.",
-    "Emphasise that drift is not a bug: the model is unchanged and the population moved."
+    "Emphasise that drift is not a bug: the model is unchanged and the population moved.",
+    "Every chart on this page has a 'View chart data as text (accessible alternative)' expander beneath it, holding the same numbers as a table."
   ]
 }

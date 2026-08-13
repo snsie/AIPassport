@@ -8,6 +8,7 @@ from sklearn.tree import DecisionTreeClassifier, plot_tree, export_text
 from sklearn.neural_network import MLPClassifier
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import accuracy_score, make_scorer, recall_score, confusion_matrix
+import aipassport_config as cfg
 
 # ── Track-specific framing (this file is the clinical track) ────────────────
 OUTCOME_FRAMING = (
@@ -25,8 +26,9 @@ st.markdown(
 **Dataset:** the bundled Pima Indians Diabetes dataset (`assets/datasets/csv/diabetes.csv`) — 768 records,
 8 numeric features, one binary outcome.
 
-**Instructions:** work through the four tabs in order. Each one hands its output to the next: the split you
-make in tab 1 is the split every model in tabs 2–4 is trained and scored on. Record your own responses
+**Instructions:** set the test-set size once below, then work through the four activities in order
+using the selector. Every model in every activity is trained and scored on that one split. Record your
+own responses
 wherever your course asks for them.
 """
 )
@@ -42,36 +44,67 @@ FEATURES = [c for c in df.columns if c != "Outcome"]
 X_all = df[FEATURES]
 y_all = df["Outcome"]
 
-tab1, tab2, tab3, tab4 = st.tabs(
-    [
-        "1. Data, Split, and Scaling",
-        "2. A Model You Can Read",
-        "3. A Model With More Capacity",
-        "4. Validating and Choosing",
-    ]
+# One split, shared by every activity, so the slider that sets it lives above the activity picker rather
+# than inside activity 1. Streamlit drops a widget's state as soon as the widget stops being rendered:
+# leaving this slider inside activity 1 meant the split silently reverted to 0.2 the moment a learner
+# moved to activity 2, while the page went on claiming every model used the split they had chosen.
+test_size = st.slider(
+    "Test set size — held back from training, and shared by all four activities",
+    0.1,
+    0.5,
+    0.2,
+    step=0.05,
+    help="Share of records held back for testing.",
+    key="m4_build_test_size",
+)
+X_train, X_test, y_train, y_test = train_test_split(
+    X_all, y_all, test_size=test_size, random_state=42, stratify=y_all
+)
+st.caption(
+    f"{len(X_train)} training records, {len(X_test)} testing records. The split is stratified, so the "
+    "outcome ratio is preserved on both sides."
 )
 
+ACTIVITIES = [
+    "1. Data, Split, and Scaling",
+    "2. A Model You Can Read",
+    "3. A Model With More Capacity",
+    "4. Validating and Choosing",
+]
+# A keyed segmented_control rather than st.tabs: tab selection lives in the browser and is
+# lost whenever a widget inside a tab triggers a rerun, which is what sent learners back to
+# the first activity mid-edit. This selection is in session_state, so it survives.
+activity = st.segmented_control(
+    "Activity",
+    ACTIVITIES,
+    default=ACTIVITIES[0],
+    key="m4_build_activity",
+    required=True,
+)
 # ═══════════════════════════════════════════════════════════════════════════
 # 1 — Data, split, and scaling
 # ═══════════════════════════════════════════════════════════════════════════
-with tab1:
+if activity == ACTIVITIES[0]:
     st.header("Activity 1: What You Are Actually Feeding the Model")
 
     st.subheader("Preview")
     n_rows = st.slider(
         "Records to display", 1, 20, 5, help="How many rows of the table to show.", key="m4_build_rows"
     )
-    st.dataframe(df.head(n_rows), use_container_width=True)
+    st.dataframe(df.head(n_rows), width="stretch")
 
-    with st.expander("View data types (`.dtypes`)"):
+    with st.expander("What kind of value is in each column? (data types)"):
         st.write(
-            "Eight numeric predictors and one binary outcome. Nothing here is categorical, which is why no "
-            "encoding step appears in this pipeline."
+            "Before a model can use a column, you have to know what kind of value it holds. The table "
+            "below lists every column and the type Python read it as: `int64` and `float64` are whole "
+            "and decimal numbers, and `object` would mean text. Eight numeric predictors and one binary "
+            "outcome — nothing here is text or a category, which is why this pipeline has no step that "
+            "converts labels into numbers."
         )
         # .astype(str): a Series of numpy dtype objects is not Arrow-serializable, and
         # Streamlit would log a conversion traceback before falling back to strings anyway.
         st.dataframe(
-            df.dtypes.astype(str).rename("dtype").to_frame(), use_container_width=True
+            df.dtypes.astype(str).rename("dtype").to_frame(), width="stretch"
         )
 
     st.subheader("Distributions by outcome")
@@ -85,34 +118,21 @@ with tab1:
         color="Outcome",
         barmode="overlay",
         title=f"Distribution of {feature_to_plot} by outcome",
-        color_discrete_sequence=["#1f77b4", "#ff7f0e"],  # colourblind-safe
+        color_discrete_sequence=[cfg.CHART_PRIMARY, cfg.CHART_SECONDARY],  # colourblind-safe
     )
     fig_hist.update_layout(height=380, margin=dict(l=40, r=20, t=55, b=45))
-    st.plotly_chart(fig_hist, use_container_width=True)
+    st.plotly_chart(fig_hist, width="stretch")
 
     with st.expander("View chart data as text (accessible alternative)"):
         st.dataframe(df.groupby("Outcome")[feature_to_plot].describe())
 
     st.subheader("The train/test split")
     st.markdown(
-        "Everything in tabs 2–4 uses **this** split. If a model were evaluated on the data it trained on, "
-        "it would score its own memorization."
+        "Every activity uses the split set by the slider at the top of the page. If a model were "
+        "evaluated on the data it trained on, it would score its own memorization."
     )
-    test_size = st.slider(
-        "Test set size",
-        0.1,
-        0.5,
-        0.2,
-        step=0.05,
-        help="Share of records held back for testing.",
-        key="m4_build_test_size",
-    )
-
     split_cols = st.columns([1, 1])
     with split_cols[0]:
-        X_train, X_test, y_train, y_test = train_test_split(
-            X_all, y_all, test_size=test_size, random_state=42, stratify=y_all
-        )
         split_df = pd.DataFrame(
             {"Set": ["Training", "Testing"], "Count": [len(X_train), len(X_test)]}
         )
@@ -122,10 +142,10 @@ with tab1:
             names="Set",
             title="Train/test proportions",
             hole=0.4,
-            color_discrete_sequence=["#1f77b4", "#ff7f0e"],
+            color_discrete_sequence=[cfg.CHART_PRIMARY, cfg.CHART_SECONDARY],
         )
         fig_pie.update_layout(height=330, margin=dict(l=20, r=20, t=55, b=20))
-        st.plotly_chart(fig_pie, use_container_width=True)
+        st.plotly_chart(fig_pie, width="stretch")
         st.caption(
             f"{len(X_train)} training records, {len(X_test)} testing records. The split is stratified, so "
             "the outcome ratio is preserved on both sides."
@@ -162,7 +182,7 @@ with tab1:
             pd.DataFrame([display_data], columns=FEATURES, index=["Patient X (row 0)"]).style.format(
                 "{:.3f}"
             ),
-            use_container_width=True,
+            width="stretch",
         )
         st.caption(
             "Decision trees are indifferent to this — they split on thresholds, not distances. Tab 3's "
@@ -172,7 +192,7 @@ with tab1:
 # ═══════════════════════════════════════════════════════════════════════════
 # 2 — Decision tree
 # ═══════════════════════════════════════════════════════════════════════════
-with tab2:
+if activity == ACTIVITIES[1]:
     st.header("Activity 2: A Decision Tree, Start to Finish")
     st.markdown(
         "A decision tree is the one model whose reasoning you can read off the page. Train it, read its "
@@ -223,8 +243,9 @@ with tab2:
     st.subheader("Live prediction simulator")
     st.markdown(
         "Set a patient's values. The tree routes them through the thresholds above and returns a class and "
-        "a probability. Try moving `Glucose` across the tree's top split and watch the answer flip."
+        "a probability."
     )
+    cfg.try_this("move `Glucose` across the tree's top split and watch the answer flip.")
 
     input_data = {}
     input_cols = st.columns(4)
@@ -258,7 +279,7 @@ with tab2:
 # ═══════════════════════════════════════════════════════════════════════════
 # 3 — Dense network + mechanism visualisers
 # ═══════════════════════════════════════════════════════════════════════════
-with tab3:
+if activity == ACTIVITIES[2]:
     st.header("Activity 3: When You Need More Capacity")
     st.markdown(
         "A tree can only cut the space with axis-aligned lines. A dense network composes non-linear "
@@ -308,7 +329,7 @@ model = Sequential([
 
         neuron_html = "<div style='display:flex; gap:10px; flex-wrap:wrap;'>"
         for n in neurons:
-            colour = "#4CAF50" if n == 1 else "#757575"
+            colour = cfg.SUCCESS if n == 1 else cfg.MUTED
             state = "Active" if n == 1 else "Deactivated"
             neuron_html += (
                 f"<div style='background-color:{colour}; width:26px; height:26px; border-radius:13px;' "
@@ -357,13 +378,13 @@ model = Sequential([
         in_window = kernel_step - 1 <= i < kernel_step + 2
         if in_window:
             kernel_html += (
-                "<div style='background-color:#1E88E5; color:#FFFFFF; padding:10px; border-radius:5px; "
+                f"<div style='background-color:{cfg.INFO}; color:{cfg.ON_DARK}; padding:10px; border-radius:5px; "
                 f"font-weight:bold; text-align:center;' aria-label='Active feature {feat}'>{feat}<br>"
                 f"{kernel_values[i]:.2f}</div>"
             )
         else:
             kernel_html += (
-                "<div style='background-color:#E0E0E0; color:#000000; padding:10px; border-radius:5px; "
+                f"<div style='background-color:{cfg.SURFACE_ALT}; color:{cfg.INK}; padding:10px; border-radius:5px; "
                 f"text-align:center;' aria-label='Inactive feature {feat}'>{feat}<br>"
                 f"{kernel_values[i]:.2f}</div>"
             )
@@ -455,14 +476,14 @@ model = Sequential([
         st.write(
             "Accuracy alone is deceptive here: 500 of the 768 records are negative, so a model that always "
             "predicted 'not diagnosed' would score about 65%. Lowering the threshold raises sensitivity and "
-            "lowers specificity; the network's advantage over the tree in tab 2 shows up mostly in the "
+            "lowers specificity; the network's advantage over the tree in activity 2 shows up mostly in the "
             "middle of that trade-off, not at the default 0.5."
         )
 
 # ═══════════════════════════════════════════════════════════════════════════
 # 4 — Cross-validation and model choice
 # ═══════════════════════════════════════════════════════════════════════════
-with tab4:
+if activity == ACTIVITIES[3]:
     st.header("Activity 4: Cross-Validation, and Which Model to Ship")
     st.markdown(
         "A single split is one draw from a lottery. Cross-validation runs the experiment on every fold, so "
@@ -508,16 +529,16 @@ with tab4:
         title="Accuracy per fold (decision tree, depth 4)",
         text_auto=".3f",
         range_y=[0, 1],
-        color_discrete_sequence=["#1f77b4"],
+        color_discrete_sequence=[cfg.CHART_PRIMARY],
     )
     fig_cv.add_hline(
         y=float(np.mean(cv_results["test_accuracy"])),
         line_dash="dash",
-        line_color="#ff7f0e",
+        line_color=cfg.CHART_SECONDARY,
         annotation_text="Mean",
     )
     fig_cv.update_layout(height=380, margin=dict(l=40, r=20, t=55, b=45))
-    st.plotly_chart(fig_cv, use_container_width=True)
+    st.plotly_chart(fig_cv, width="stretch")
 
     with st.expander("View fold metrics as text (accessible alternative)"):
         st.dataframe(cv_df)
@@ -532,14 +553,14 @@ with tab4:
 
     compare_cols = st.columns(2)
     with compare_cols[0]:
-        st.markdown("**Decision tree (tab 2)**")
+        st.markdown("**Decision tree (activity 2)**")
         st.markdown(
             "- Logic: readable if-then thresholds\n"
             "- Transparency: high — you can print the rules\n"
             "- Capacity: axis-aligned splits only"
         )
     with compare_cols[1]:
-        st.markdown("**Dense network (tab 3)**")
+        st.markdown("**Dense network (activity 3)**")
         st.markdown(
             "- Logic: non-linear combinations across hidden layers\n"
             "- Transparency: low — needs post-hoc explanation\n"
@@ -573,7 +594,7 @@ st.markdown(
 ---
 **Key takeaways**
 
-- One split, one scaler, one pipeline. Every number above traces back to the split you made in tab 1.
+- One split, one scaler, one pipeline. Every number above traces back to the split you set at the top of the page.
 - Scaling matters for distance- and gradient-based models and not at all for trees. Know which you have.
 - The threshold is a decision, not a default. 0.5 encodes the assumption that a miss and a false alarm cost
   the same.

@@ -14,7 +14,7 @@ programs. But designing a strong AI-enabled experiment requires more than select
 establishing clear hypotheses, understanding data limitations, choosing appropriate techniques, and planning
 for baseline and comparative evaluations.
 
-This subsection walks that path in three steps. Work them in order: each one takes the output of the last.
+This subsection walks that path in three steps.
 
 1. **Find the opening** — name a gap in your own field and see what AI approach could address it.
 2. **Design the study** — describe the experiment and get structured feedback on its feasibility and clarity.
@@ -105,7 +105,7 @@ def run_llm_activity(
     if st.button(
         "✅ Submit",
         type="primary",
-        use_container_width=True,
+        width="stretch",
         key=f"m7_{slug}_submit",
         disabled=client is None,
     ):
@@ -210,7 +210,7 @@ else:
     intended use, provenance, and known limitations.
 
     You built a smaller version of this in subsection 2.2. The point is the same and it is worth repeating:
-    the artefact is what lets the next person inherit your caveats instead of rediscovering them.
+    the artifact is what lets the next person inherit your caveats instead of rediscovering them.
     """
     )
     run_llm_activity(
@@ -224,9 +224,22 @@ else:
 st.markdown(
     """
 ---
+**Key takeaways**
+
+- **A gap is a claim about the literature, not a hunch.** If you cannot say what has already been tried
+  and why it fell short, you have a topic rather than an opening.
+- A study design is judged on whether it could fail. Name the result that would tell you the hypothesis
+  was wrong, or there is nothing to evaluate.
+- **Choosing an AI method is the last decision, not the first.** It follows from the question, the data
+  you can actually get, and the baseline you have to beat.
+- A baseline is not optional. Without one, a good-looking number says nothing about whether the AI helped.
+- **Documentation is part of the science.** A datasheet or model card is what lets the next person inherit
+  your caveats instead of rediscovering them the hard way.
+- Generative AI feedback is a rehearsal, not a review. Everything it returns still needs your judgement.
+
 **Where this goes next**
 
-The three artefacts above — a gap worth closing, a study design that survives scrutiny, and a datasheet that
+The three artifacts above — a gap worth closing, a study design that survives scrutiny, and a datasheet that
 states its limits — are the inputs to subsection 7.2. Keep them.
 """
 )

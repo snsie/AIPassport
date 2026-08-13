@@ -2,8 +2,8 @@ import streamlit as st
 
 st.markdown(
     """
-Before a model is measured, it has to be reasoned about. This subsection asks three questions in
-sequence, each one narrower and more consequential than the last:
+Some questions about an AI system cannot be settled by a number. Someone has to reason them through
+first, and decide what would even count as harm. This subsection asks three of those questions:
 
 1. **Which ethical principles are in tension** when a clinical AI system is deployed?
 2. **How does a training-population mismatch become deployed harm?**
@@ -108,9 +108,11 @@ with st.expander("Read the case (click to expand)", expanded=True):
     immediate care. The proposal is an algorithm that **ranks patients by acuity**, calculated from the
     symptoms and demographic data entered by hospital staff.
 
-    > - What are the possible **vectors of bias** that might affect patient care?
-    > - What should the hospital consider **before** deploying the tool?
-    > - What are the possible negative outcomes?
+    Answer three things:
+
+    - What are the possible **vectors of bias** that might affect patient care?
+    - What should the hospital consider **before** deploying the tool?
+    - What are the possible negative outcomes?
     """
     )
 
@@ -186,7 +188,7 @@ st.markdown("---")
 # ═══════════════════════════════════════════════════════════════════════════
 # Closing reflection
 # ═══════════════════════════════════════════════════════════════════════════
-st.header("Reflection")
+st.header("Consider this:")
 
 st.markdown(
     """
@@ -197,22 +199,27 @@ Each case above was resolved by reasoning. None of it is verifiable yet — whic
 - Which of the three cases could have been caught by a metric, and which needed a person to notice?
 """
 )
-st.text_area("Your reflection:", height=120, key="m2_ethics_reflection")
+st.text_area("Your response:", height=120, key="m2_ethics_reflection")
 
 st.markdown(
     """
 ---
-**Key concepts**
+**Key takeaways**
 
 - **Autonomy** = respecting patients' wishes and privacy · **Beneficence** = doing good for the
   patient and population · **Non-maleficence** = avoiding harm · **Justice** = fairness in the
   distribution of risks and benefits.
+- **The four principles conflict in practice.** Naming which one you let win, and what that cost the
+  others, is the whole of the reasoning — listing all four is not.
 - No algorithm is objective or immune to bias. Both the technical design and the human interpretation can
   perpetuate or reduce inequity.
+- **A population mismatch becomes harm through people, not just data.** A model trained on the wrong
+  population and trusted by a clinician who assumes it cannot be wrong fails twice over.
 - A tool that is *usually* right in a high-stakes setting creates a new failure mode: nobody checks it.
+- **Some harms have no metric yet.** Reasoning is what tells you which metric to go build in 2.2.
 
-**Further reading:** [Principlism in Clinical Ethics (Stanford)](https://plato.stanford.edu/entries/principle-bioethics/) ·
-[AMA: AI and Health Equity](https://www.ama-assn.org/delivering-care/ethics/artificial-intelligence-health-care) ·
+**Further reading:** [Theory and Bioethics — the four principles (Stanford)](https://plato.stanford.edu/entries/theory-bioethics/) ·
+[AMA: Advancing health care AI through ethics, evidence and equity](https://www.ama-assn.org/practice-management/digital-health/advancing-health-care-ai-through-ethics-evidence-and-equity) ·
 [WHO: Ethics & Governance of AI for Health](https://www.who.int/publications/i/item/9789240029200)
 """
 )

@@ -17,7 +17,7 @@
     {
       "name": "1. The Design Brief",
       "purpose": "State the gap, the research question, and the data plan before any modelling.",
-      "how_to_use": "Six inputs: a gap, a SMART research question, a multiselect of data elements, cohort criteria, missingness and bias, and preprocessing. Keep each answer short and specific."
+      "how_to_use": "Six inputs: a gap framed as the limitations of predictive models, a SMART research question, a multiselect of data elements, cohort criteria, missingness and bias, and preprocessing. There is no answer key; the 'Check your own answers against these criteria' expander below gives six criteria the learner applies to their own text. The most common failure it catches is a question the data plan cannot answer."
     },
     {
       "name": "2. Rigor Lab: Outliers",
@@ -39,6 +39,7 @@
     "The scenario is 30-day CHF readmission at an academic medical centre; the rigor lab uses a 40-patient simulated admission table (age, length_of_stay, bnp, sodium).",
     "Push back gently on vague design-brief answers. 'We will handle missing data' is not a plan; naming the mechanism is.",
     "A flagged outlier is not automatically an error. Whether it is a data-entry mistake or a genuinely unusual patient changes what the learner is allowed to do next.",
-    "The four validation tasks are four separate claims. A strong answer to one does not cover the others."
+    "The four validation tasks are four separate claims. A strong answer to one does not cover the others.",
+    "Every chart on this page has a 'View chart data as text (accessible alternative)' expander beneath it, holding the same numbers as a table."
   ]
 }

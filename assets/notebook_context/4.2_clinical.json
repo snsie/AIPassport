@@ -20,22 +20,27 @@
       "how_to_use": "A dataset selector, not a track selector: the real eICU cohort is messier; the synthetic cohort has a known ground truth. One split and one scaler follow from this choice."
     },
     {
-      "name": "Tab 1 - Overfitting and Tuning",
+      "name": "Activity selector",
+      "purpose": "Four activities behind one segmented control at the top of the page.",
+      "how_to_use": "Click a chip to switch activity. The dataset, split, scaler, and the logistic-regression model audited in Activity 3 and explained in Activity 4 are all built once above the selector."
+    },
+    {
+      "name": "Activity 1 - Overfitting and Tuning",
       "purpose": "Locate the point where a model stops generalizing.",
       "how_to_use": "Set a low k and a high k to compare decision-boundary contours, then raise 'maximum k to test' to plot train vs. test accuracy. The dashed line marks the best test k; the train-test gap at k=1 is reported as a metric."
     },
     {
-      "name": "Tab 2 - Validation Strategies",
+      "name": "Activity 2 - Validation Strategies",
       "purpose": "Choose a folding scheme that earns the number you report.",
       "how_to_use": "Set folds and model complexity to see the accuracy distribution across folds, then compare K-Fold against Stratified K-Fold, including their standard deviations. LOO-CV is explained in the caption rather than computed."
     },
     {
-      "name": "Tab 3 - Subgroup Fairness",
+      "name": "Activity 3 - Subgroup Fairness",
       "purpose": "Split the test set and check whether the model serves every stratum.",
       "how_to_use": "Pick a subgroup variable and drag the two-handle slider to set the stratum boundaries. The per-stratum table reports accuracy, sensitivity, and specificity. Strata with fewer than 5 positive cases are flagged unestimable and excluded from the sensitivity spread."
     },
     {
-      "name": "Tab 4 - Explaining Predictions",
+      "name": "Activity 4 - Explaining Predictions",
       "purpose": "Explain the model globally, one record locally, and by counterfactual.",
       "how_to_use": "SHAP summary plot (set how many features to display), LIME for a single test record (set its index), and a what-if simulator: move the feature sliders and watch the prediction and probability change."
     }
@@ -44,6 +49,7 @@
     "The clinical track opens on the real eICU cohort; the learner can switch to the synthetic one, where overfitting is easier to see because the ground truth is known.",
     "In tab 3, moving the stratum boundaries changes how unfair the model looks. That is the point: strata must be chosen for clinical reasons and stated in advance.",
     "A stratum with fewer than five positive cases is flagged unestimable, because a single record swings sensitivity from 0.00 to 1.00. With the eICU cohort at default age boundaries this suppresses what would otherwise read as a large disparity.",
-    "SHAP explains the model, LIME explains one prediction, and the what-if simulator tests whether either agrees with what the learner already knows."
+    "SHAP explains the model, LIME explains one prediction, and the what-if simulator tests whether either agrees with what the learner already knows.",
+    "Every chart on this page has a 'View chart data as text (accessible alternative)' expander beneath it, holding the same numbers as a table."
   ]
 }

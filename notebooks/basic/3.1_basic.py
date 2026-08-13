@@ -7,6 +7,7 @@ from faker import Faker
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
+import aipassport_config as cfg
 
 # ── Track-specific framing (this file is the basic science track) ───────────
 DATASET_NAME = "ImmPort (Immunology Database and Analysis Portal)"
@@ -18,10 +19,11 @@ UNDERSERVED_EXAMPLE = "Donors of non-European ancestry"
 st.markdown(
     f"""
 Before you clean a dataset, you have to decide whether it is worth using at all. You are acting as the
-**ethical compliance officer** reviewing a proposed study protocol against
-[{DATASET_NAME}]({DATASET_LINK}).
+**ethical compliance officer** reviewing a proposed study protocol using data from
+[{DATASET_NAME}]({DATASET_LINK}), which uses human subject data from immunology, vaccine response, and
+other biomedical studies.
 
-Five audits, each answering a different question about trust:
+Let's look at five different audits, each answering a different question about trust:
 
 | Audit | The question it answers |
 | --- | --- |
@@ -30,29 +32,34 @@ Five audits, each answering a different question about trust:
 | **3. Security** | If this data leaked tomorrow, what would it cost? |
 | **4. Label quality** | Do the humans who annotated it agree with each other? |
 | **5. Vocabulary** | Can anyone outside this lab read it? |
-
-Subsection 3.2 then does the hands-on cleaning and cross-site work.
 """
 )
 
-tab1, tab2, tab3, tab4, tab5 = st.tabs(
-    [
-        "1. Consent (Autonomy)",
-        "2. Representation (Justice)",
-        "3. Security (Privacy)",
-        "4. Label Quality",
-        "5. Common Vocabulary",
-    ]
+AUDITS = [
+    "1. Consent (Autonomy)",
+    "2. Representation (Justice)",
+    "3. Security (Privacy)",
+    "4. Label Quality",
+    "5. Common Vocabulary",
+]
+# A keyed segmented_control rather than st.tabs: tab selection lives in the browser and is
+# lost whenever a widget inside a tab triggers a rerun, which is what sent learners back to
+# the first activity mid-edit. This selection is in session_state, so it survives.
+audit = st.segmented_control(
+    "Audit",
+    AUDITS,
+    default=AUDITS[0],
+    key="m3_audit",
+    required=True,
 )
-
 # ═══════════════════════════════════════════════════════════════════════════
 # Audit 1 — Consent
 # ═══════════════════════════════════════════════════════════════════════════
-with tab1:
+if audit == AUDITS[0]:
     st.header("Audit 1: The 'Fine Print' Audit")
     st.markdown(
         f"""
-    Informed consent is not a signature on a document — it is a dynamic, ongoing dialogue. The current
+    Informed consent is not just a signature on a document — it is a dynamic, ongoing dialogue. The current
     protocol uses standard legal text for {SUBJECT_TERM.lower()} consent. Use the tool below to revise the
     language and watch what happens to comprehension.
     """
@@ -76,17 +83,24 @@ with tab1:
         st.markdown("#### Revision tool")
         literacy = st.select_slider(
             "Language complexity level:",
-            options=["Technical jargon", "Standard", "Simplified & empowering"],
+            options=["Technical jargon", "Standard", "Simplified"],
             value="Technical jargon",
             key="m3_consent_literacy",
         )
 
+        # Every level rewrites the text, including Standard. Showing revised wording only at the top of
+        # the slider made the middle setting look broken — nothing on screen changed when it moved.
         if literacy == "Technical jargon":
             st.info("Status: no changes made — see the audit finding on the left.")
         elif literacy == "Standard":
             st.info(
-                "Status: improved, but still transactional. The donor is informed; they are not yet a "
-                "partner."
+                f"**Revised text:** 'You are being asked to permit the storage and research use of your "
+                f"{SAMPLE_TERM.lower()} and related data. Participation is voluntary and you may withdraw "
+                "your consent at a later date.'"
+            )
+            st.markdown(
+                "**Audit result:** improved, but still transactional. The donor is informed; they are not "
+                "yet a partner."
             )
         else:
             st.success(
@@ -99,7 +113,7 @@ with tab1:
 # ═══════════════════════════════════════════════════════════════════════════
 # Audit 2 — Representation
 # ═══════════════════════════════════════════════════════════════════════════
-with tab2:
+if audit == AUDITS[1]:
     st.header("Audit 2: The 'Hidden Population' Audit")
     st.markdown(
         """
@@ -165,13 +179,16 @@ with tab2:
             y="Percentage",
             color="Stage",
             color_discrete_map={
-                "Baseline (passive)": "#95a5a6",
-                "With selected strategies": "#27ae60",
-                "Target goal": "#2c3e50",
+                "Baseline (passive)": cfg.MUTED,
+                "With selected strategies": cfg.SUCCESS,
+                "Target goal": cfg.OXFORD_BLUE,
             },
         )
         fig.update_layout(height=260, showlegend=False, margin=dict(l=40, r=20, t=25, b=40))
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
+
+        with st.expander("View chart data as text (accessible alternative)"):
+            st.dataframe(rep_df, width="stretch", hide_index=True)
 
     if current >= goal:
         st.success(
@@ -188,7 +205,7 @@ with tab2:
 # ═══════════════════════════════════════════════════════════════════════════
 # Audit 3 — Security
 # ═══════════════════════════════════════════════════════════════════════════
-with tab3:
+if audit == AUDITS[2]:
     st.header("Audit 3: The 'Data Fortress' Audit")
     st.markdown(
         f"""
@@ -241,7 +258,7 @@ with tab3:
 # ═══════════════════════════════════════════════════════════════════════════
 # Audit 4 — Label quality
 # ═══════════════════════════════════════════════════════════════════════════
-with tab4:
+if audit == AUDITS[3]:
     st.header("Audit 4: Do the Annotators Agree?")
     st.markdown(
         """
@@ -286,7 +303,7 @@ with tab4:
     numeric_data = annotation_data[rating_cols]
 
     st.markdown("**Simulated annotations** (0 = benign, 1 = pathogenic; one row per variant):")
-    st.dataframe(annotation_data.head(), use_container_width=True)
+    st.dataframe(annotation_data.head(), width="stretch")
 
     def icc(data):
         """Consistency ICC: between-item variance as a share of total variance."""
@@ -335,7 +352,13 @@ with tab4:
         )
         fig2 = px.histogram(dist_df, x="Annotation", color="Annotation", title="Annotation counts")
         fig2.update_layout(height=320, showlegend=False, margin=dict(l=30, r=20, t=50, b=40))
-        st.plotly_chart(fig2, use_container_width=True)
+        st.plotly_chart(fig2, width="stretch")
+
+        with st.expander("View chart data as text (accessible alternative)"):
+            st.dataframe(
+                dist_df["Annotation"].value_counts().rename("Count").to_frame(),
+                width="stretch",
+            )
 
     st.subheader("High-disagreement variants")
     st.markdown(
@@ -346,13 +369,15 @@ with tab4:
     disagreement_view = annotation_data.assign(Disagreement_Score=numeric_data.var(axis=1))
     st.dataframe(
         disagreement_view.sort_values("Disagreement_Score", ascending=False).head(10),
-        use_container_width=True,
+        width="stretch",
     )
 
     st.subheader("How many annotators do you actually need?")
     st.markdown(
-        "Each curve point trains a model on the **consensus label** from the first *n* researchers, then "
-        "scores it against the hidden truth."
+        "Read the curve left to right. At each point, that many researchers have annotated every sample "
+        "and their majority vote becomes the label. A model is trained on those labels, and its accuracy "
+        "is then checked against the true answer — which the simulation knows but no researcher saw. "
+        "Where the curve stops climbing is where an extra annotator stops buying you anything."
     )
 
     @st.cache_data
@@ -386,7 +411,10 @@ with tab4:
         title="Model accuracy vs. number of annotators",
     )
     fig3.update_layout(height=380, margin=dict(l=40, r=20, t=55, b=45))
-    st.plotly_chart(fig3, use_container_width=True)
+    st.plotly_chart(fig3, width="stretch")
+
+    with st.expander("View chart data as text (accessible alternative)"):
+        st.dataframe(results_df.round(3), width="stretch", hide_index=True)
 
     st.info(
         """
@@ -401,7 +429,7 @@ with tab4:
 # ═══════════════════════════════════════════════════════════════════════════
 # Audit 5 — Common vocabulary
 # ═══════════════════════════════════════════════════════════════════════════
-with tab5:
+if audit == AUDITS[4]:
     st.header("Audit 5: Can Anyone Else Read This Data?")
     st.markdown(
         """
@@ -451,7 +479,7 @@ with tab5:
 
     st.subheader("Step 1 — Raw source data")
     st.markdown("Messy, non-standardized donor records exported from the biorepository's local database.")
-    st.dataframe(source_data, use_container_width=True)
+    st.dataframe(source_data, width="stretch")
 
     GENDER_CONCEPTS = {"Male": 8507, "Female": 8532}
     RACE_CONCEPTS = {"White": 8527, "Black": 8516, "Asian": 8515, "Other": 8529}
@@ -482,7 +510,7 @@ with tab5:
         "Names and addresses are gone. Demographics are now **concept IDs** — `8507` means male in every "
         "OMOP database on earth, whether the source system wrote 'Male', 'M', or '1'."
     )
-    st.dataframe(omop_person, use_container_width=True)
+    st.dataframe(omop_person, width="stretch")
 
     with st.expander("The concept map behind Step 2"):
         st.dataframe(
@@ -497,7 +525,7 @@ with tab5:
                     + ["Ethnicity"] * len(ETHNICITY_CONCEPTS),
                 }
             ),
-            use_container_width=True,
+            width="stretch",
         )
 
     @st.cache_data
@@ -530,7 +558,7 @@ with tab5:
     )
     st.dataframe(
         generate_donor_conditions(tuple(omop_person["person_id"]), int(seed_value)),
-        use_container_width=True,
+        width="stretch",
     )
 
 st.markdown(
@@ -545,7 +573,7 @@ st.markdown(
 - A standard vocabulary is what makes your data usable by anyone who did not build it.
 
 **Resources:** [OHDSI OMOP CDM documentation](https://www.ohdsi.org/data-standardization/the-common-data-model/) ·
-[REP-EQUITY Toolkit](https://ic3.center.ufl.edu/research/resources/datasets/) ·
+[REP-EQUITY Toolkit](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC10719102/) ·
 [{dataset}]({link})
 """.format(dataset=DATASET_NAME, link=DATASET_LINK)
 )

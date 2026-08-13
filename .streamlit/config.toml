@@ -1,6 +1,30 @@
+# AI Passport Branding Document v1.
+#
+# Streamlit cannot read Python for its theme, so these values duplicate
+# aipassport_config.py. That file is the source of truth — change it first,
+# then mirror it here.
+#
+# Everything typographic belongs in this file, NOT in the entrypoint's CSS.
+# Streamlit renders Material icons as ligatures on spans that carry
+# st-emotion-cache-* classes, so a broad `font-family` rule in injected CSS
+# turns every icon into its literal name ("keyboard_arrow_down"). theme.font
+# targets the right nodes and leaves the icon font alone.
 [theme]
-primaryColor = "#FA4616"
-backgroundColor = "#FFFFFF"
-secondaryBackgroundColor = "#E8EEF7"
-textColor = "#2C2C2C"
-font = "sans serif"
+# primaryColor is OXFORD_BLUE rather than the accent, because Streamlit puts
+# white text on primaryColor buttons and neither AQUAMARINE nor TEAL carries
+# white text at WCAG AA.
+primaryColor = "#002657"              # OXFORD_BLUE
+backgroundColor = "#FFFFFF"           # SURFACE
+secondaryBackgroundColor = "#E9F5F3"  # SURFACE_ALT
+textColor = "#0E1A2B"                 # INK
+borderColor = "#D3DEE4"               # BORDER
+linkColor = "#002657"                 # OXFORD_BLUE
+
+# The branding document's face for UF websites and Canvas. The "<name>:<url>"
+# form lets Streamlit load the webfont itself; the trailing sans-serif is the
+# fallback while it loads or if fonts.googleapis.com is unreachable.
+font = "IBM Plex Sans:https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap, sans-serif"
+
+# cfg.CHART_SEQUENCE. Applies to Plotly, Altair, and Vega-Lite automatically,
+# so a chart with no explicit colours is already on-brand.
+chartCategoricalColors = ["#002657", "#F2A900", "#2CA6A4", "#800080", "#2E7D32", "#5C6B7A"]

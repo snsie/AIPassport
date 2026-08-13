@@ -8,7 +8,7 @@
   "audience": "Basic science researchers new to AI",
   "objectives": [
     "Apply normalization and augmentation, and say what a transform fabricates.",
-    "Match a denoising filter to the artefact it assumes.",
+    "Match a denoising filter to the artifact it assumes.",
     "Compare Sobel, Canny, and Otsu on a controlled image and explain how each fails.",
     "Judge whether an imaging pipeline is consistent enough to publish from."
   ],
@@ -19,28 +19,33 @@
       "how_to_use": "A selectbox for the bundled brightfield or fluorescence samples, or an upload."
     },
     {
-      "name": "Tab 1 - Normalization & Augmentation",
+      "name": "Activity selector",
+      "purpose": "Four activities behind one segmented control.",
+      "how_to_use": "Click a chip to switch activity. All four share the working-image selectbox above them."
+    },
+    {
+      "name": "Activity 1 - Normalization & Augmentation",
       "purpose": "Teach a model the shape of a structure, not its position.",
       "how_to_use": "Set the normalization factor and rotation angle, and tick the horizontal/vertical flip checkboxes. Note that rotation uses mode='wrap', so it fabricates the corners."
     },
     {
-      "name": "Tab 2 - Artefacts & Denoising",
+      "name": "Activity 2 - Artifacts & Denoising",
       "purpose": "Match the fix to the fault.",
       "how_to_use": "Motion blur first (length and angle) -- irreversible, so the right response is to re-acquire. Then salt-and-pepper noise: set the amount, choose Median or Gaussian, and compare the mean-absolute-error metric. Median wins because an outlier is never the median."
     },
     {
-      "name": "Tab 3 - Feature Extraction",
+      "name": "Activity 3 - Feature Extraction",
       "purpose": "Compare edge and threshold methods where the right answer is known.",
       "how_to_use": "Two parts: 3.1 directional and Sobel gradients across five panels; 3.2 a synthetic bright rectangle with controllable noise, compared four ways (input, Sobel, Canny, Otsu) with a 'Reveal logic' checkbox under each panel. Because the true boundary is a perfect square, every departure is the method's error."
     },
     {
-      "name": "Tab 4 - Is the Pipeline Trustworthy?",
+      "name": "Activity 4 - Is the Pipeline Trustworthy?",
       "purpose": "Decide whether the pipeline is consistent enough to act on.",
       "how_to_use": "Choose the application, then work the six-gate consistency checklist. The score and verdict update as boxes are ticked; it opens at 0/6 by design. Three reflection prompts follow."
     }
   ],
   "chatbot_guidance": [
-    "The right filter is the one whose assumption matches the artefact: median for outliers, Gaussian for smooth additive noise, and nothing at all for motion blur -- reject and re-acquire.",
+    "The right filter is the one whose assumption matches the artifact: median for outliers, Gaussian for smooth additive noise, and nothing at all for motion blur -- reject and re-acquire.",
     "The mean-absolute-error metric in tab 2 lets the learner measure the median-vs-Gaussian claim instead of taking it on faith.",
     "Two experiments worth suggesting in tab 3: raise the noise to 100 and compare Sobel against Canny; then set the blur sigma to 0 and watch Otsu break, which shows the pre-blur was doing more work than the thresholding.",
     "The tab 4 checklist opens at 0/6 by design."

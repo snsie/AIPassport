@@ -15,27 +15,32 @@
   ],
   "sections": [
     {
-      "name": "Tab 1 - Consent (Autonomy)",
-      "purpose": "Judge whether a consent form was actually understood.",
-      "how_to_use": "Move the language-complexity select_slider from jargon to 'Simplified & empowering' and compare the revised text against the legal standard on the left."
+      "name": "Audit selector",
+      "purpose": "Five audits behind one segmented control at the top of the page.",
+      "how_to_use": "Click a chip to switch audit. Only the selected audit renders, and the choice is held in session state, so a widget that triggers a rerun does not lose your place. Work all five."
     },
     {
-      "name": "Tab 2 - Representation (Justice)",
+      "name": "Audit 1 - Consent (Autonomy)",
+      "purpose": "Judge whether a consent form was actually understood.",
+      "how_to_use": "Move the language-complexity select_slider through its three steps. 'Medical jargon' leaves the legal text alone; 'Standard' and 'Simplified' each show their own revised wording beside it, so every move changes what is on screen. Only 'Simplified' is rated compliant."
+    },
+    {
+      "name": "Audit 2 - Representation (Justice)",
       "purpose": "Cost out what closing a representation gap actually takes.",
       "how_to_use": "Name the missing group, set the target-proportion slider, then tick the three strategy checkboxes (community liaisons +10%, translated materials +5%, logistical support +10%). The bar chart and pass/fail verdict update. The baseline is a fixed 5% for passive recruitment."
     },
     {
-      "name": "Tab 3 - Security (Privacy)",
+      "name": "Audit 3 - Security (Privacy)",
       "purpose": "Recognise that de-identification alone is not protection.",
-      "how_to_use": "Tick the four security layers. All four gives SECURE; two or three gives VULNERABLE; fewer gives CRITICAL RISK. The page opens at CRITICAL RISK by design, because nothing is checked yet."
+      "how_to_use": "Tick the four security layers. All four gives SECURE; two or three gives VULNERABLE; fewer gives CRITICAL RISK. The activity opens at CRITICAL RISK by design, because nothing is checked yet."
     },
     {
-      "name": "Tab 4 - Label Quality",
+      "name": "Audit 4 - Label Quality",
       "purpose": "Establish that a model cannot be more reliable than its labels.",
       "how_to_use": "Simulated radiologists label chest X-rays. Set the number of X-rays, radiologists, and the disagreement rate, then read the ICC metric, the high-disagreement table (candidates for re-review), and the accuracy-vs-number-of-annotators curve, whose elbow answers 'how many readers can we afford'."
     },
     {
-      "name": "Tab 5 - Common Vocabulary",
+      "name": "Audit 5 - Common Vocabulary",
       "purpose": "Make the data readable outside your own institution.",
       "how_to_use": "Set the patient count and seed, then follow the three steps: raw EHR source records, the OMOP person table (names and addresses removed, demographics replaced by concept IDs such as 8507 for male), and condition_occurrence mapped from ICD-10."
     }
@@ -44,6 +49,7 @@
     "The audit target is the IC3 UF public COVID-19 dataset; the subject is a patient and the sample is an electronic health record.",
     "At the default 20% disagreement rate the ICC is negative. That is not a bug: it means the radiologists disagree with each other more than the X-rays differ, so the label carries no signal. The page explains this.",
     "The security tab opens at CRITICAL RISK because nothing is checked yet, not because something is broken.",
-    "The OMOP demo runs on both tracks. If asked why concept IDs matter, the answer is that the same query then works at a site that codes in SNOMED."
+    "The OMOP demo runs on both tracks. If asked why concept IDs matter, the answer is that the same query then works at a site that codes in SNOMED.",
+    "Every chart on this page has a 'View chart data as text (accessible alternative)' expander beneath it, holding the same numbers as a table."
   ]
 }

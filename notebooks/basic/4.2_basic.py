@@ -8,6 +8,7 @@ from plotly.subplots import make_subplots
 import shap
 import lime
 import lime.lime_tabular
+import aipassport_config as cfg
 from sklearn.model_selection import (
     train_test_split,
     KFold,
@@ -25,9 +26,8 @@ DEFAULT_DATASET_INDEX = 1  # basic science track opens on the synthetic cohort
 
 st.markdown(
     """
-Subsection 4.1 built a model. This one stops trusting it.
-
-Four questions, in the order you should ask them:
+Subsection 4.1 built a model. Now we have to evaluate if we trust the model. Let's consider these four
+questions sequentially:
 
 1. **Where does it start memorizing?** Compare a model that is too complex with one that is too simple.
 2. **Which validation strategy earns the number you report?**
@@ -46,7 +46,7 @@ def render_plotly_chart(fig, height=520):
         margin=dict(l=20, r=20, t=60, b=40),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
     )
-    st.plotly_chart(fig, use_container_width=True, config={"responsive": True})
+    st.plotly_chart(fig, width="stretch", config={"responsive": True})
 
 
 @st.cache_data
@@ -88,7 +88,7 @@ def load_synthetic_cohort():
 
 DATASETS = {
     "eICU cohort (real ICU admissions, in-hospital mortality)": load_eicu_subset,
-    "Synthetic cohort (simulated measurements, known ground truth)": load_synthetic_cohort,
+    "Synthetic cohort (simulated cell measurements, predicting apoptosis, known ground truth)": load_synthetic_cohort,
 }
 
 dataset_choice = st.selectbox(
@@ -112,24 +112,37 @@ scaler = StandardScaler()
 X_train_s = scaler.fit_transform(X_train)
 X_test_s = scaler.transform(X_test)
 
+# The one model activities 3 and 4 share: activity 3 audits it by subgroup, activity 4 explains it. It is
+# fitted here rather than inside activity 3 because only the selected activity's body executes, and
+# activity 4's explanations have to describe the same fitted model the audit just scored.
+fair_model = LogisticRegression(solver="lbfgs", max_iter=1000)
+fair_model.fit(X_train, y_train)
+
 st.caption(
     f"{len(df)} records · {len(FEATURES)} features · target `{TARGET}` · "
     f"{len(X_train)} train / {len(X_test)} test (stratified, random_state=42)."
 )
 
-tab1, tab2, tab3, tab4 = st.tabs(
-    [
-        "1. Overfitting and Tuning",
-        "2. Validation Strategies",
-        "3. Subgroup Fairness",
-        "4. Explaining Predictions",
-    ]
+ACTIVITIES = [
+    "1. Overfitting and Tuning",
+    "2. Validation Strategies",
+    "3. Subgroup Fairness",
+    "4. Explaining Predictions",
+]
+# A keyed segmented_control rather than st.tabs: tab selection lives in the browser and is
+# lost whenever a widget inside a tab triggers a rerun, which is what sent learners back to
+# the first activity mid-edit. This selection is in session_state, so it survives.
+activity = st.segmented_control(
+    "Activity",
+    ACTIVITIES,
+    default=ACTIVITIES[0],
+    key="m4_eval_activity",
+    required=True,
 )
-
 # ═══════════════════════════════════════════════════════════════════════════
 # 1 — Overfitting and tuning
 # ═══════════════════════════════════════════════════════════════════════════
-with tab1:
+if activity == ACTIVITIES[0]:
     st.header("Activity 1: Where the Model Starts Memorizing")
     st.markdown(
         """
@@ -223,19 +236,29 @@ with tab1:
     fig_acc = go.Figure()
     fig_acc.add_trace(
         go.Scatter(x=ks, y=train_acc, mode="lines+markers", name="Train accuracy",
-                   line=dict(color="#00204c"))
+                   line=dict(color=cfg.CHART_PRIMARY))
     )
     fig_acc.add_trace(
         go.Scatter(x=ks, y=test_acc, mode="lines+markers", name="Test accuracy",
-                   line=dict(color="#d6b800"))
+                   line=dict(color=cfg.CHART_SECONDARY))
     )
     best_k = ks[int(np.argmax(test_acc))]
     fig_acc.add_vline(
-        x=best_k, line_dash="dash", line_color="#d62728", annotation_text=f"best test k={best_k}"
+        x=best_k, line_dash="dash", line_color=cfg.DANGER, annotation_text=f"best test k={best_k}"
     )
     fig_acc.update_xaxes(title_text="Number of neighbours (k)")
     fig_acc.update_yaxes(title_text="Accuracy", range=[0, 1.05])
     render_plotly_chart(fig_acc, height=470)
+
+    with st.expander("View chart data as text (accessible alternative)"):
+        st.dataframe(
+            pd.DataFrame(
+                {"k": ks, "Train accuracy": train_acc, "Test accuracy": test_acc}
+            ).round(3),
+            width="stretch",
+            hide_index=True,
+        )
+
     st.caption(
         "Dark blue is training accuracy, yellow is test accuracy. At k=1 training accuracy is perfect and "
         "meaningless — the nearest neighbour of a training point is itself."
@@ -255,10 +278,10 @@ with tab1:
 # ═══════════════════════════════════════════════════════════════════════════
 # 2 — Validation strategies
 # ═══════════════════════════════════════════════════════════════════════════
-with tab2:
+if activity == ACTIVITIES[1]:
     st.header("Activity 2: Which Validation Strategy Earns Your Number")
     st.markdown(
-        "The accuracy in tab 1 came from one split. Change the split and it changes. Cross-validation shows "
+        "The accuracy in activity 1 came from one split. Change the split and it changes. Cross-validation shows "
         "you the whole distribution, and *how* you fold matters as much as how many times."
     )
 
@@ -283,13 +306,23 @@ with tab2:
             boxpoints="all",
             jitter=0.35,
             pointpos=0,
-            marker_color="#d6b800",
-            line_color="#00204c",
+            marker_color=cfg.CHART_SECONDARY,
+            line_color=cfg.CHART_PRIMARY,
         )
     )
     fig_cv.update_xaxes(title_text="Accuracy", range=[0, 1.05])
     fig_cv.update_layout(title=f"Accuracy distribution across {n_f} folds")
     render_plotly_chart(fig_cv, height=400)
+
+    with st.expander("View chart data as text (accessible alternative)"):
+        st.dataframe(
+            pd.DataFrame(
+                {"Fold": range(1, len(kf_scores) + 1), "Accuracy": kf_scores}
+            ).round(3),
+            width="stretch",
+            hide_index=True,
+        )
+
     st.caption(
         "Each dot is one fold. A wide box means the model's performance depends heavily on which records "
         "happened to land in the test fold — so a single split would have been a coin toss."
@@ -314,12 +347,21 @@ with tab2:
             x=methods,
             y=means,
             error_y=dict(type="data", array=stds, visible=True),
-            marker_color=["#00204c", "#d6b800"],
+            marker_color=[cfg.CHART_PRIMARY, cfg.CHART_SECONDARY],
             text=[f"{m:.3f}" for m in means],
         )
     )
     fig_bar.update_yaxes(title_text="Mean accuracy", range=[0, 1.1])
     render_plotly_chart(fig_bar, height=430)
+
+    with st.expander("View chart data as text (accessible alternative)"):
+        st.dataframe(
+            pd.DataFrame(
+                {"Method": methods, "Mean accuracy": means, "Std. dev. across folds": stds}
+            ).round(4),
+            width="stretch",
+            hide_index=True,
+        )
 
     strat_cols = st.columns(2)
     strat_cols[0].metric("K-Fold std. dev.", f"{kf_scores.std():.4f}")
@@ -342,15 +384,12 @@ with tab2:
 # ═══════════════════════════════════════════════════════════════════════════
 # 3 — Subgroup fairness
 # ═══════════════════════════════════════════════════════════════════════════
-with tab3:
+if activity == ACTIVITIES[2]:
     st.header("Activity 3: Does It Work Equally Well for Everyone?")
     st.markdown(
         "One aggregate number can hide a model that works well for the majority and fails for a subgroup. "
         "The only way to find out is to split the test set and score each stratum separately."
     )
-
-    fair_model = LogisticRegression(solver="lbfgs", max_iter=1000)
-    fair_model.fit(X_train, y_train)
 
     overall_cols = st.columns(3)
     overall_pred = fair_model.predict(X_test)
@@ -411,7 +450,7 @@ with tab3:
     fair_df = pd.DataFrame(metrics_list)
 
     col_a, col_b = st.columns([1, 1.5])
-    col_a.dataframe(fair_df, use_container_width=True)
+    col_a.dataframe(fair_df, width="stretch")
 
     fig_fair, ax_fair = plt.subplots(figsize=(8, 4))
     sns.barplot(
@@ -471,11 +510,11 @@ with tab3:
 # ═══════════════════════════════════════════════════════════════════════════
 # 4 — Explaining predictions
 # ═══════════════════════════════════════════════════════════════════════════
-with tab4:
+if activity == ACTIVITIES[3]:
     st.header("Activity 4: Why Did It Say That?")
     st.markdown(
         "Three complementary answers to the same question, at three different scales. All use the logistic "
-        "regression from tab 3, so the explanations describe the model you just audited."
+        "regression from activity 3, so the explanations describe the model you just audited."
     )
 
     st.subheader("Globally: SHAP")
@@ -496,6 +535,25 @@ with tab4:
     shap.summary_plot(shap_values, X_test, max_display=max_display, show=False)
     st.pyplot(plt.gcf())
     plt.close(fig_shap)
+
+    with st.expander("View chart data as text (accessible alternative)"):
+        st.markdown(
+            "Mean absolute SHAP value per feature — how much that feature moves a prediction on "
+            "average, regardless of direction. This is the ranking the plot encodes vertically."
+        )
+        st.dataframe(
+            pd.DataFrame(
+                {
+                    "Feature": list(X_test.columns),
+                    "Mean |SHAP|": np.abs(shap_values.values).mean(axis=0),
+                }
+            )
+            .sort_values("Mean |SHAP|", ascending=False)
+            .head(max_display)
+            .round(4),
+            width="stretch",
+            hide_index=True,
+        )
     st.caption(
         "Each dot is one record. Position on the x-axis is that feature's contribution to that record's "
         "prediction; colour is the feature's value. A feature whose dots spread far from zero matters; one "
@@ -531,6 +589,17 @@ with tab4:
         fig_lime = exp.as_pyplot_figure()
         st.pyplot(fig_lime)
         plt.close(fig_lime)
+
+        with st.expander("View chart data as text (accessible alternative)"):
+            st.markdown(
+                "Each row is one condition LIME found in this record. A positive weight pushed the "
+                "prediction towards class 1; a negative weight pushed it towards class 0."
+            )
+            st.dataframe(
+                pd.DataFrame(exp.as_list(), columns=["Condition", "Weight"]).round(4),
+                width="stretch",
+                hide_index=True,
+            )
     with lime_cols[1]:
         st.markdown(f"**Record #{record_idx}**")
         st.dataframe(X_test.iloc[[record_idx]].T.rename(columns={X_test.index[record_idx]: "Value"}))
@@ -575,7 +644,7 @@ st.markdown(
 ---
 **Key takeaways**
 
-- Overfitting is measurable, not a vibe: it is the gap between training and held-out performance.
+- Overfitting is measurable: it is the gap between training and held-out performance.
 - Stratified K-Fold is the default for biomedical data because it protects the minority class in every fold.
 - Aggregate performance is not performance. Report it by subgroup, with the strata chosen in advance.
 - SHAP explains the model, LIME explains one prediction, and a counterfactual check tests whether either

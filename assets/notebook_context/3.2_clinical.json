@@ -43,6 +43,7 @@
     "The scenario is harmonising patient data across City General and Mountain View Clinic to predict COVID-19 severity. The target feature is a WBC count; the secondary feature is O2 saturation, missing in every tenth record.",
     "The constraint that shapes the whole page: federated learning only works if every site preprocesses identically, so the agreement has to happen before the first round.",
     "Steps 3 and 4 are gated behind the 'Apply handling and proceed' checkbox. If a learner cannot find them, that box is why.",
-    "Imputing with zero is not neutral -- in clinical data zero usually means something."
+    "Imputing with zero is not neutral -- in clinical data zero usually means something.",
+    "Every chart on this page has a 'View chart data as text (accessible alternative)' expander beneath it, holding the same numbers as a table."
   ]
 }
